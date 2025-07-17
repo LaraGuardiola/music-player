@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Cosmic Music Player</title>
+        <link rel="stylesheet" href="style.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <div class="container">
+            <header class="header">
+                <h1 class="title">COSMIC MUSIC PLAYER</h1>
+                <div class="subtitle">Space Odyssey Collection</div>
+            </header>
+
+            <div class="player-section">
+                <div class="current-track">
+                    <div class="track-info">
+                        <div class="track-name" id="current-track-name">
+                            Select a track
+                        </div>
+                        <div class="track-duration" id="current-track-duration">
+                            --:--
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="time-display">
+                            <span id="current-time">0:00</span>
+                            <span id="total-time">0:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="control-btn" id="prev-btn">⏮</button>
+                    <button class="control-btn play-btn" id="play-btn">
+                        ▶
+                    </button>
+                    <button class="control-btn" id="next-btn">⏭</button>
+                </div>
+
+                <div class="volume-section">
+                    <span class="volume-label">Volume</span>
+                    <input
+                        type="range"
+                        class="volume-slider"
+                        id="volume-slider"
+                        min="0"
+                        max="100"
+                        value="50"
+                    />
+                </div>
+            </div>
+
+            <div class="playlist-section">
+                <h2 class="playlist-title">Space Odyssey Playlist</h2>
+                <div class="playlist" id="playlist">
+                    <!-- Playlist items will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <audio id="audio-player" preload="metadata"></audio>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
+</html>
