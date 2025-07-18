@@ -1,3 +1,5 @@
+import { fetchTracks } from "./api.js";
+
 class CosmicMusicPlayer {
   constructor() {
     this.currentTrackIndex = 0;
@@ -15,124 +17,20 @@ class CosmicMusicPlayer {
       "current-track-duration",
     );
     this.playlist = document.getElementById("playlist");
-
-    // Space-themed playlist with local MP3 files
-    this.tracks = [
-      {
-        name: "No Time for Caution",
-        artist: "Hans Zimmer (Interstellar OST)",
-        duration: "4:05",
-        durationSeconds: 245,
-        url: "tracks/Hans Zimmer - No Time For Caution.mp3",
-      },
-      {
-        name: "Cornfield Chase",
-        artist: "Hans Zimmer (Interstellar OST)",
-        duration: "2:06",
-        durationSeconds: 126,
-        url: "tracks/cornfield-chase.mp3",
-      },
-      {
-        name: "Space Exploration",
-        artist: "Stellaris OST",
-        duration: "3:42",
-        durationSeconds: 222,
-        url: "tracks/space-exploration.mp3",
-      },
-      {
-        name: "Deus Ex Machina",
-        artist: "Stellaris OST",
-        duration: "4:18",
-        durationSeconds: 258,
-        url: "tracks/deus-ex-machina.mp3",
-      },
-      {
-        name: "Also sprach Zarathustra",
-        artist: "Richard Strauss (2001: A Space Odyssey)",
-        duration: "8:45",
-        durationSeconds: 525,
-        url: "tracks/also-sprach-zarathustra.mp3",
-      },
-      {
-        name: "Blue Danube",
-        artist: "Johann Strauss II (2001: A Space Odyssey)",
-        duration: "6:30",
-        durationSeconds: 390,
-        url: "tracks/blue-danube.mp3",
-      },
-      {
-        name: "Adagio for Strings",
-        artist: "Samuel Barber (Platoon/Space Movies)",
-        duration: "7:25",
-        durationSeconds: 445,
-        url: "tracks/adagio-for-strings.mp3",
-      },
-      {
-        name: "Binary Sunset",
-        artist: "John Williams (Star Wars)",
-        duration: "2:55",
-        durationSeconds: 175,
-        url: "tracks/binary-sunset.mp3",
-      },
-      {
-        name: "Imperial March",
-        artist: "John Williams (Star Wars)",
-        duration: "3:02",
-        durationSeconds: 182,
-        url: "tracks/imperial-march.mp3",
-      },
-      {
-        name: "Duel of the Fates",
-        artist: "John Williams (Star Wars)",
-        duration: "4:14",
-        durationSeconds: 254,
-        url: "tracks/duel-of-the-fates.mp3",
-      },
-      {
-        name: "Across the Stars",
-        artist: "John Williams (Star Wars)",
-        duration: "5:33",
-        durationSeconds: 333,
-        url: "tracks/across-the-stars.mp3",
-      },
-      {
-        name: "Horizon",
-        artist: "Stellaris OST",
-        duration: "3:28",
-        durationSeconds: 208,
-        url: "tracks/horizon.mp3",
-      },
-      {
-        name: "Into the Void",
-        artist: "Mass Effect OST",
-        duration: "4:45",
-        durationSeconds: 285,
-        url: "tracks/into-the-void.mp3",
-      },
-      {
-        name: "Leaving Earth",
-        artist: "Mass Effect 3 OST",
-        duration: "3:15",
-        durationSeconds: 195,
-        url: "tracks/leaving-earth.mp3",
-      },
-      {
-        name: "Shepard's Theme",
-        artist: "Mass Effect OST",
-        duration: "2:38",
-        durationSeconds: 158,
-        url: "tracks/shepards-theme.mp3",
-      },
-    ];
-
-    this.init();
+    this.tracks = [];
   }
 
-  init() {
+  async init() {
+    await this.setTracks();
     this.setupEventListeners();
     this.renderPlaylist();
     this.loadTrack(0);
     this.updateVolumeDisplay();
+  }
+
+  async setTracks() {
+    this.tracks = await fetchTracks();
+    console.log("Tracks loaded:", this.tracks);
   }
 
   setupEventListeners() {
@@ -170,22 +68,24 @@ class CosmicMusicPlayer {
   renderPlaylist() {
     this.playlist.innerHTML = "";
 
-    this.tracks.forEach((track, index) => {
-      const playlistItem = document.createElement("div");
-      playlistItem.className = "playlist-item";
-      playlistItem.dataset.index = index;
+    if (Array.isArray(this.tracks) && this.tracks.length > 0) {
+      this.tracks.forEach((track, index) => {
+        const playlistItem = document.createElement("div");
+        playlistItem.className = "playlist-item";
+        playlistItem.dataset.index = index;
 
-      playlistItem.innerHTML = `
-                <div class="song-info">
-                    <div class="song-name">${track.name}</div>
-                    <div class="song-artist">${track.artist}</div>
-                </div>
-                <div class="song-duration">${track.duration}</div>
-            `;
+        playlistItem.innerHTML = `
+                  <div class="song-info">
+                      <div class="song-name">${track.name}</div>
+                      <div class="song-artist">${track.artist}</div>
+                  </div>
+                  <div class="song-duration">${track.duration}</div>
+              `;
 
-      playlistItem.addEventListener("click", () => this.selectTrack(index));
-      this.playlist.appendChild(playlistItem);
-    });
+        playlistItem.addEventListener("click", () => this.selectTrack(index));
+        this.playlist.appendChild(playlistItem);
+      });
+    }
   }
 
   selectTrack(index) {
@@ -200,20 +100,22 @@ class CosmicMusicPlayer {
   }
 
   loadTrack(index) {
-    const track = this.tracks[index];
-    this.currentTrackName.textContent = track.name;
-    this.currentTrackDuration.textContent = track.duration;
+    if (Array.isArray(this.tracks) && this.tracks.length > 0) {
+      const track = this.tracks[index];
+      this.currentTrackName.textContent = track.name;
+      this.currentTrackDuration.textContent = track.duration;
 
-    // Check if the MP3 file exists and load it
-    this.audio.src = track.url;
-    this.audio.load(); // Force reload of the audio element
+      // Check if the MP3 file exists and load it
+      this.audio.src = track.url;
+      this.audio.load(); // Force reload of the audio element
 
-    // Reset progress display
-    this.progressFill.style.width = "0%";
-    this.currentTimeDisplay.textContent = "0:00";
-    this.totalTimeDisplay.textContent = track.duration;
+      // Reset progress display
+      this.progressFill.style.width = "0%";
+      this.currentTimeDisplay.textContent = "0:00";
+      this.totalTimeDisplay.textContent = track.duration;
 
-    this.updateActiveTrack();
+      this.updateActiveTrack();
+    }
   }
 
   updateActiveTrack() {
@@ -265,6 +167,7 @@ class CosmicMusicPlayer {
     this.loadTrack(this.currentTrackIndex);
 
     if (this.isPlaying) {
+      this.stopProgressSimulation();
       this.play();
     }
   }
@@ -274,6 +177,7 @@ class CosmicMusicPlayer {
     this.loadTrack(this.currentTrackIndex);
 
     if (this.isPlaying) {
+      this.stopProgressSimulation();
       this.play();
     }
   }
@@ -350,9 +254,6 @@ class CosmicMusicPlayer {
 
   onAudioError(e) {
     console.error("Audio error:", e);
-    console.log("File not found. Using simulation mode.");
-    // Fallback to simulation on error
-    this.startProgressSimulation();
   }
 
   onLoadStart() {
@@ -409,8 +310,9 @@ class CosmicMusicPlayer {
 }
 
 // Initialize the music player when the page loads
-document.addEventListener("DOMContentLoaded", () => {
-  new CosmicMusicPlayer();
+document.addEventListener("DOMContentLoaded", async () => {
+  const player = new CosmicMusicPlayer();
+  await player.init();
 });
 
 // Add some visual effects for enhanced experience
