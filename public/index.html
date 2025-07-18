@@ -12,10 +12,17 @@
     </head>
     <body>
         <div class="container">
-            <header class="header">
+            <!-- <header class="header">
                 <h1 class="title">COSMIC MUSIC PLAYER</h1>
                 <div class="subtitle">Space Odyssey Collection</div>
-            </header>
+            </header> -->
+
+            <div class="playlist-section">
+                <h2 class="playlist-title">Playlist</h2>
+                <div class="playlist" id="playlist">
+                    <!-- Playlist items will be populated by JavaScript -->
+                </div>
+            </div>
 
             <div class="player-section">
                 <div class="current-track">
@@ -23,7 +30,7 @@
                         <div class="track-name" id="current-track-name">
                             Select a track
                         </div>
-                        <div class="track-duration" id="current-track-duration">
+                        <div class="track-duration" id="current-track-artist">
                             --:--
                         </div>
                     </div>
@@ -44,25 +51,6 @@
                         ▶
                     </button>
                     <button class="control-btn" id="next-btn">⏭</button>
-                </div>
-
-                <div class="volume-section">
-                    <span class="volume-label">Volume</span>
-                    <input
-                        type="range"
-                        class="volume-slider"
-                        id="volume-slider"
-                        min="0"
-                        max="100"
-                        value="50"
-                    />
-                </div>
-            </div>
-
-            <div class="playlist-section">
-                <h2 class="playlist-title">Space Odyssey Playlist</h2>
-                <div class="playlist" id="playlist">
-                    <!-- Playlist items will be populated by JavaScript -->
                 </div>
             </div>
 

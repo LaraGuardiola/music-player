@@ -7,7 +7,7 @@ package-lock.json
 
 # Audio files (optional - uncomment if you want to exclude audio files)
 # audio/
-# *.mp3
+*.mp3
 # *.wav
 # *.ogg
 # *.m4a

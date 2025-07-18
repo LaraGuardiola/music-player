@@ -8,14 +8,11 @@ class CosmicMusicPlayer {
     this.playBtn = document.getElementById("play-btn");
     this.prevBtn = document.getElementById("prev-btn");
     this.nextBtn = document.getElementById("next-btn");
-    this.volumeSlider = document.getElementById("volume-slider");
     this.progressFill = document.getElementById("progress-fill");
     this.currentTimeDisplay = document.getElementById("current-time");
     this.totalTimeDisplay = document.getElementById("total-time");
     this.currentTrackName = document.getElementById("current-track-name");
-    this.currentTrackDuration = document.getElementById(
-      "current-track-duration",
-    );
+    this.currentTrackArtist = document.getElementById("current-track-artist");
     this.playlist = document.getElementById("playlist");
     this.tracks = [];
   }
@@ -25,7 +22,6 @@ class CosmicMusicPlayer {
     this.setupEventListeners();
     this.renderPlaylist();
     this.loadTrack(0);
-    this.updateVolumeDisplay();
   }
 
   async setTracks() {
@@ -40,11 +36,6 @@ class CosmicMusicPlayer {
     // Previous/Next buttons
     this.prevBtn.addEventListener("click", () => this.previousTrack());
     this.nextBtn.addEventListener("click", () => this.nextTrack());
-
-    // Volume slider
-    this.volumeSlider.addEventListener("input", (e) =>
-      this.setVolume(e.target.value),
-    );
 
     // Audio events
     this.audio.addEventListener("loadedmetadata", () => this.updateTrackInfo());
@@ -76,7 +67,7 @@ class CosmicMusicPlayer {
 
         playlistItem.innerHTML = `
                   <div class="song-info">
-                      <div class="song-name">${track.name}</div>
+                      <div class="song-name">${track.name.slice(0, -4)}</div>
                       <div class="song-artist">${track.artist}</div>
                   </div>
                   <div class="song-duration">${track.duration}</div>
@@ -102,8 +93,8 @@ class CosmicMusicPlayer {
   loadTrack(index) {
     if (Array.isArray(this.tracks) && this.tracks.length > 0) {
       const track = this.tracks[index];
-      this.currentTrackName.textContent = track.name;
-      this.currentTrackDuration.textContent = track.duration;
+      this.currentTrackName.textContent = track.name.slice(0, -4);
+      this.currentTrackArtist.textContent = track.artist;
 
       // Check if the MP3 file exists and load it
       this.audio.src = track.url;
@@ -180,16 +171,6 @@ class CosmicMusicPlayer {
       this.stopProgressSimulation();
       this.play();
     }
-  }
-
-  setVolume(value) {
-    this.audio.volume = value / 100;
-    this.updateVolumeDisplay();
-  }
-
-  updateVolumeDisplay() {
-    const volume = this.volumeSlider.value;
-    this.volumeSlider.style.background = `linear-gradient(to right, #ff0096 0%, #00ffff ${volume}%, rgba(255,255,255,0.1) ${volume}%)`;
   }
 
   seek(e) {
@@ -289,22 +270,6 @@ class CosmicMusicPlayer {
         e.preventDefault();
         this.nextTrack();
         break;
-      case "ArrowUp":
-        e.preventDefault();
-        this.volumeSlider.value = Math.min(
-          100,
-          parseInt(this.volumeSlider.value) + 10,
-        );
-        this.setVolume(this.volumeSlider.value);
-        break;
-      case "ArrowDown":
-        e.preventDefault();
-        this.volumeSlider.value = Math.max(
-          0,
-          parseInt(this.volumeSlider.value) - 10,
-        );
-        this.setVolume(this.volumeSlider.value);
-        break;
     }
   }
 }
@@ -315,9 +280,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await player.init();
 });
 
-// Add some visual effects for enhanced experience
 document.addEventListener("DOMContentLoaded", () => {
-  // Add floating particles effect
   createFloatingParticles();
 
   // Add mouse move effect for subtle interactivity

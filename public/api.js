@@ -1,6 +1,6 @@
 async function fetchTracks() {
   try {
-    const response = await fetch("http://localhost:3030/api/tracks");
+    const response = await fetch("http://192.168.1.35:3030/api/tracks");
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
