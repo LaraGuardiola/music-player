@@ -42,40 +42,6 @@ body::before {
     padding: 20px;
 }
 
-.header {
-    text-align: center;
-    margin-bottom: 40px;
-    padding: 20px;
-    border: 2px solid transparent;
-    background: linear-gradient(
-        45deg,
-        rgba(255, 0, 150, 0.1),
-        rgba(0, 255, 255, 0.1)
-    );
-    border-radius: 15px;
-    position: relative;
-}
-
-.header::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 15px;
-    padding: 2px;
-    background: linear-gradient(45deg, #ff0096, #00ffff, #ff0096);
-    mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-}
-
 .title {
     font-size: 3em;
     font-weight: 900;
@@ -236,16 +202,6 @@ body::before {
     scrollbar-width: none;  /* Firefox */
 }
 
-.playlist-title {
-    font-size: 2em;
-    font-weight: 700;
-    color: #ff0096;
-    text-shadow: 0 0 10px rgba(255, 0, 150, 0.5);
-    margin-bottom: 0.5em;
-    text-align: center;
-    letter-spacing: 2px;
-}
-
 .playlist {
     display: flex;
     flex-direction: column;
@@ -295,6 +251,24 @@ body::before {
     border-color: #ff0096;
     box-shadow: 0 0 20px rgba(255, 0, 150, 0.5);
     background: rgba(255, 0, 150, 0.1);
+}
+
+.playlist-item.sticky-active {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-color: #ff0096;
+    box-shadow: 0 0 20px rgba(255, 0, 150, 0.5);
+}
+
+.playlist-item.sticky-active-bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-color: #ff0096;
+    box-shadow: 0 0 20px rgba(255, 0, 150, 0.5);
 }
 
 .playlist-item.active::before {

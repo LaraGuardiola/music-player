@@ -54,6 +54,41 @@ class CosmicMusicPlayer {
 
     // Keyboard shortcuts
     document.addEventListener("keydown", (e) => this.handleKeyboard(e));
+
+    // Playlist scroll event when is overflowing
+    document
+      .querySelector(".playlist-section")
+      .addEventListener("scroll", () => {
+        const activeItem = this.playlist.querySelector(".playlist-item.active");
+        if (!activeItem) return;
+
+        const playlistSection = document.querySelector(".playlist-section");
+        const playlistSectionRect = playlistSection.getBoundingClientRect();
+        const activeRect = activeItem.getBoundingClientRect();
+
+        // Determine if the active item is in the top or bottom half of the playlist
+        const activeIndex = parseInt(activeItem.dataset.index);
+        const totalTracks = this.tracks.length;
+        const isBottomHalf = activeIndex >= Math.floor(totalTracks / 2);
+
+        if (isBottomHalf) {
+          // Bottom sticky behavior for items in the lower half
+          if (activeRect.bottom >= playlistSectionRect.bottom - 5) {
+            activeItem.classList.add("sticky-active-bottom");
+            activeItem.classList.remove("sticky-active");
+          } else if (activeRect.bottom < playlistSectionRect.bottom - 20) {
+            activeItem.classList.remove("sticky-active-bottom");
+          }
+        } else {
+          // Top sticky behavior for items in the upper half
+          if (activeRect.top <= playlistSectionRect.top + 5) {
+            activeItem.classList.add("sticky-active");
+            activeItem.classList.remove("sticky-active-bottom");
+          } else if (activeRect.top > playlistSectionRect.top + 20) {
+            activeItem.classList.remove("sticky-active");
+          }
+        }
+      });
   }
 
   renderPlaylist() {
@@ -110,9 +145,11 @@ class CosmicMusicPlayer {
   }
 
   updateActiveTrack() {
-    // Remove active class from all items
+    // Remove active and sticky-active class from all items
     document.querySelectorAll(".playlist-item").forEach((item) => {
       item.classList.remove("active");
+      item.classList.remove("sticky-active");
+      item.classList.remove("sticky-active-bottom");
     });
 
     // Add active class to current track
