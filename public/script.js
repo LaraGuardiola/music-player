@@ -73,7 +73,7 @@ class CosmicMusicPlayer {
 
         if (isBottomHalf) {
           // Bottom sticky behavior for items in the lower half
-          if (activeRect.bottom >= playlistSectionRect.bottom - 5) {
+          if (activeRect.bottom >= playlistSectionRect.bottom - 30) {
             activeItem.classList.add("sticky-active-bottom");
             activeItem.classList.remove("sticky-active");
           } else if (activeRect.bottom < playlistSectionRect.bottom - 20) {
@@ -81,7 +81,7 @@ class CosmicMusicPlayer {
           }
         } else {
           // Top sticky behavior for items in the upper half
-          if (activeRect.top <= playlistSectionRect.top + 5) {
+          if (activeRect.top <= playlistSectionRect.top + 30) {
             activeItem.classList.add("sticky-active");
             activeItem.classList.remove("sticky-active-bottom");
           } else if (activeRect.top > playlistSectionRect.top + 20) {

@@ -2,6 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -237,16 +238,6 @@ body::before {
     transition: width 0.3s ease;
 }
 
-.playlist-item:hover::before {
-    width: 100%;
-}
-
-.playlist-item:hover {
-    border-color: rgba(0, 255, 255, 0.5);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-    transform: translateX(5px);
-}
-
 .playlist-item.active {
     border-color: #ff0096;
     box-shadow: 0 0 20px rgba(255, 0, 150, 0.5);
@@ -278,6 +269,17 @@ body::before {
         rgba(255, 0, 150, 0.3),
         rgba(0, 255, 255, 0.3)
     );
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .playlist-item:hover::before {
+        width: 100%;
+    }
+    .playlist-item:hover {
+        border-color: rgba(0, 255, 255, 0.5);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        transform: translateX(5px);
+    }
 }
 
 .song-info {
