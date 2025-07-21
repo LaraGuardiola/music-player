@@ -182,14 +182,14 @@ class CosmicMusicPlayer {
 
     this.isPlaying = true;
     this.playerSection.classList.add("playing");
-    this.playStopIcon.src = "/assets/stop.svg";
+    this.playStopIcon.src = "./assets/stop.svg";
   }
 
   pause() {
     this.audio.pause();
     this.isPlaying = false;
     this.playerSection.classList.remove("playing");
-    this.playStopIcon.src = "/assets/play.svg";
+    this.playStopIcon.src = "./assets/play.svg";
     this.stopProgressSimulation();
   }
 
