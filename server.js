@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3030;
 
 // Serve static files from the public directory
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "docs")));
 
 // API endpoint to get all tracks
 app.get("/api/tracks", async (req, res) => {
