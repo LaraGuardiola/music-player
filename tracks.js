@@ -12,7 +12,7 @@ const secondsToMinutes = (s) =>
 
 export async function getTracks() {
   try {
-    const tracksPath = path.join(__dirname, "public", "tracks");
+    const tracksPath = path.join(__dirname, "docs", "tracks");
 
     // Check if tracks directory exists
     if (!fs.existsSync(tracksPath)) {
