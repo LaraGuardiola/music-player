@@ -5,6 +5,7 @@ class CosmicMusicPlayer {
     this.currentTrackIndex = 0;
     this.isPlaying = false;
     this.audio = document.getElementById("audio-player");
+    this.playerSection = document.querySelector(".player-section");
     this.playBtn = document.getElementById("play-btn");
     this.playStopIcon = document.querySelector("#play-stop-icon");
     this.prevBtn = document.getElementById("prev-btn");
@@ -180,12 +181,14 @@ class CosmicMusicPlayer {
     });
 
     this.isPlaying = true;
+    this.playerSection.classList.add("playing");
     this.playStopIcon.src = "/assets/stop.svg";
   }
 
   pause() {
     this.audio.pause();
     this.isPlaying = false;
+    this.playerSection.classList.remove("playing");
     this.playStopIcon.src = "/assets/play.svg";
     this.stopProgressSimulation();
   }

@@ -74,6 +74,50 @@ body::before {
     box-shadow:
         0 0 30px rgba(255, 0, 150, 0.2),
         inset 0 0 30px rgba(0, 255, 255, 0.1);
+    position: relative;
+    z-index: 1;
+}
+
+.player-section::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(90deg, #ff0096, #00ffff, #ff0096, #00ffff);
+    background-size: 200% 100%;
+    background-repeat: repeat;
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes glowing {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.player-section.playing::before {
+    opacity: 1;
+    animation: glowing 10s linear infinite;
 }
 
 .current-track {
@@ -136,6 +180,10 @@ body::before {
 }
 
 .control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     background: linear-gradient(
         45deg,
         rgba(255, 0, 150, 0.2),
@@ -151,6 +199,17 @@ body::before {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+}
+
+.play-btn img, .control-btn img {
+  width: 33%;
+  height: 33%;
+  object-fit: contain;
+}
+
+.control-btn img {
+  width: 40%;
+  height: 40%;
 }
 
 .control-btn::before {
