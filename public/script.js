@@ -6,6 +6,7 @@ class CosmicMusicPlayer {
     this.isPlaying = false;
     this.audio = document.getElementById("audio-player");
     this.playBtn = document.getElementById("play-btn");
+    this.playStopIcon = document.querySelector("#play-stop-icon");
     this.prevBtn = document.getElementById("prev-btn");
     this.nextBtn = document.getElementById("next-btn");
     this.progressFill = document.getElementById("progress-fill");
@@ -76,7 +77,7 @@ class CosmicMusicPlayer {
           if (activeRect.bottom >= playlistSectionRect.bottom - 30) {
             activeItem.classList.add("sticky-active-bottom");
             activeItem.classList.remove("sticky-active");
-          } else if (activeRect.bottom < playlistSectionRect.bottom - 20) {
+          } else if (activeRect.bottom < playlistSectionRect.bottom - 30) {
             activeItem.classList.remove("sticky-active-bottom");
           }
         } else {
@@ -84,7 +85,7 @@ class CosmicMusicPlayer {
           if (activeRect.top <= playlistSectionRect.top + 30) {
             activeItem.classList.add("sticky-active");
             activeItem.classList.remove("sticky-active-bottom");
-          } else if (activeRect.top > playlistSectionRect.top + 20) {
+          } else if (activeRect.top > playlistSectionRect.top + 30) {
             activeItem.classList.remove("sticky-active");
           }
         }
@@ -179,13 +180,13 @@ class CosmicMusicPlayer {
     });
 
     this.isPlaying = true;
-    this.playBtn.textContent = "⏸";
+    this.playStopIcon.src = "/assets/stop.svg";
   }
 
   pause() {
     this.audio.pause();
     this.isPlaying = false;
-    this.playBtn.textContent = "▶";
+    this.playStopIcon.src = "/assets/play.svg";
     this.stopProgressSimulation();
   }
 
