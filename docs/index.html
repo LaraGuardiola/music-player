@@ -64,7 +64,9 @@
             if ("serviceWorker" in navigator) {
                 window.addEventListener("load", () => {
                     navigator.serviceWorker
-                        .register("/service-worker.js")
+                        .register(
+                            "https://github.com/laraguardiola/laraguardiola.github.io/blob/main/service-worker.js",
+                        )
                         .then((registration) => {
                             console.log(
                                 "Service Worker registered successfully:",
