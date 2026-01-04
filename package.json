@@ -4,7 +4,9 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "bun server.ts --host",
+    "dev": "concurrently \"vite --host\" \"bun server.ts --dev\"",
+    "build": "vite build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,7 +14,17 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@types/bun": "^1.3.5",
     "express": "^5.1.0",
     "music-metadata": "^11.7.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "vite": "^7.3.0"
   }
 }
