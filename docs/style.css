@@ -11,6 +11,8 @@ body {
     color: #ffffff;
     height: 100dvh;
     overflow-x: hidden;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 body::before {
@@ -40,8 +42,6 @@ body::before {
     max-width: 1200px;
     height: 100%;
     margin: 0 auto;
-    margin-top: env(safe-area-inset-top) !important;
-    margin-bottom: env(safe-area-inset-bottom) !important;
     padding: 20px;
 }
 
@@ -157,6 +157,7 @@ body::before {
     overflow: hidden;
     border: 1px solid rgba(0, 255, 255, 0.3);
     margin-bottom: 10px;
+    cursor: pointer;
 }
 
 .progress-fill {
@@ -208,6 +209,8 @@ body::before {
     width: 33%;
     height: 33%;
     object-fit: contain;
+    /* MEJORA: Evitar que la imagen se distorsione */
+    pointer-events: none;
 }
 
 .control-btn img {
@@ -263,6 +266,11 @@ body::before {
         inset 0 0 30px rgba(0, 255, 255, 0.1);
     -ms-overflow-style: none; /* IE y Edge */
     scrollbar-width: none; /* Firefox */
+}
+
+/* Ocultar scrollbar en WebKit */
+.playlist-section::-webkit-scrollbar {
+    display: none;
 }
 
 .playlist {
