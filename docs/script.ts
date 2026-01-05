@@ -1,6 +1,7 @@
 import { fetchTracks } from "./api";
 import { MediaStoreService } from "./music.service";
 import { DebugPanel } from "./debugPanel";
+import { CapacitorMediaStore } from "@odion-cloud/capacitor-mediastore";
 
 interface Track {
   name: string;
@@ -16,13 +17,6 @@ interface Particle {
   y: number;
   vx: number;
   vy: number;
-}
-
-// ✅ SOLUCIÓN ALTERNATIVA: Función helper para obtener la URL de los assets
-function getAssetUrl(path: string): string {
-  // En desarrollo usa la ruta relativa
-  // En producción Vite resolverá correctamente
-  return new URL(path, import.meta.url).href;
 }
 
 export class CosmicMusicPlayer {
@@ -45,7 +39,6 @@ export class CosmicMusicPlayer {
   private playlistSection: HTMLElement;
   private debugPanel: DebugPanel | null = null;
 
-  // Rutas de los iconos usando import.meta
   private readonly playIconUrl: string;
   private readonly stopIconUrl: string;
 
@@ -91,23 +84,49 @@ export class CosmicMusicPlayer {
 
   async init(): Promise<void> {
     this.debugPanel?.addLog("🎵 Initializing player...");
-    await this.setTracks();
+
+    // ✅ CRÍTICO: Esperar a que se carguen las canciones antes de continuar
+    this.debugPanel?.addLog("⏳ Waiting for MediaStore...");
+
+    this.tracks = await MediaStoreService.waitForTracks();
+
+    this.debugPanel?.addLog(
+      `🎵 MediaStore ready (${this.tracks.length} tracks)`,
+    );
+
     this.setupEventListeners();
     this.renderPlaylist();
 
     if (this.tracks.length > 0) {
+      this.debugPanel?.addLog(
+        `✅ Found ${this.tracks.length} tracks, loading first track...`,
+      );
       void this.loadTrack(0);
     } else {
       this.currentTrackName.textContent = "No music found";
       this.currentTrackArtist.textContent = "Add MP3 files to your device";
       this.debugPanel?.addLog("⚠️ No tracks found");
     }
+
+    this.debugPanel?.addLog("✅ Player initialization complete");
   }
 
   private async setTracks(): Promise<void> {
-    this.tracks = await fetchTracks();
-    console.log("Tracks loaded:", this.tracks);
-    this.debugPanel?.addLog(`✅ Loaded ${this.tracks.length} tracks`);
+    this.debugPanel?.addLog("📂 Fetching tracks...");
+
+    try {
+      this.tracks = await fetchTracks();
+      console.log("Tracks loaded:", this.tracks);
+      this.debugPanel?.addLog(`✅ Loaded ${this.tracks.length} tracks`);
+
+      if (this.tracks.length === 0) {
+        this.debugPanel?.addLog("⚠️ No tracks returned from fetchTracks()");
+      }
+    } catch (error) {
+      console.error("Error fetching tracks:", error);
+      this.debugPanel?.addLog(`❌ Error fetching tracks: ${error}`);
+      this.tracks = [];
+    }
   }
 
   private setupEventListeners(): void {
@@ -266,7 +285,7 @@ export class CosmicMusicPlayer {
 
   private togglePlay(): void {
     this.debugPanel?.addLog(
-      `🎮 Toggle play (current: ${this.isPlaying ? "playing" : "paused"})`,
+      `🎮 Toggle (current: ${this.isPlaying ? "playing" : "paused"})`,
     );
     if (this.isPlaying) {
       this.pause();
@@ -283,7 +302,7 @@ export class CosmicMusicPlayer {
       .play()
       .then(() => {
         console.log("Playback started");
-        this.debugPanel?.addLog("✅ Playback started successfully");
+        this.debugPanel?.addLog("✅ Playback started");
         this.isPlaying = true;
         this.playerSection.classList.add("playing");
         this.updatePlayIcon();
@@ -399,7 +418,7 @@ export class CosmicMusicPlayer {
     const track = this.tracks[this.currentTrackIndex];
     let currentTime = 0;
 
-    this.debugPanel?.addLog("⚠️ Using progress simulation (fallback)");
+    this.debugPanel?.addLog("⚠️ Progress simulation (fallback)");
 
     this.progressInterval = window.setInterval(() => {
       if (currentTime >= track.durationSeconds) {
@@ -431,9 +450,9 @@ export class CosmicMusicPlayer {
     console.error("Audio error:", e);
     const target = e.target as HTMLAudioElement;
     if (target.error) {
-      const errorMsg = `Error code: ${target.error.code}, message: ${target.error.message}`;
+      const errorMsg = `Error ${target.error.code}: ${target.error.message}`;
       console.error(errorMsg);
-      this.debugPanel?.addLog(`❌ Audio error: ${errorMsg}`);
+      this.debugPanel?.addLog(`❌ Audio: ${errorMsg}`);
     }
   }
 
@@ -477,25 +496,28 @@ export class CosmicMusicPlayer {
   }
 }
 
+const PERMISSION_KEY = "media_permissions_granted";
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("🚀 DOM Loaded");
   const debugPanel = new DebugPanel();
   (window as any).debugPanel = debugPanel;
-
   debugPanel.addLog("🚀 Application starting...");
+  debugPanel.addLog("🔐 Requesting permissions...");
 
-  try {
-    if (await MediaStoreService.requestPermissions()) {
-      debugPanel.addLog("✅ Permissions granted, initializing player...");
-      const player = new CosmicMusicPlayer(debugPanel);
-      await player.init();
-    } else {
-      debugPanel.addLog("❌ Permissions denied");
-    }
-  } catch (error) {
-    console.error("Player initialization error:", error);
-    debugPanel.addLog(`❌ Player init error: ${error}`);
+  const hasPermission = await CapacitorMediaStore.checkPermissions();
+
+  if (!hasPermission) {
+    debugPanel.addLog("❌ Permissions denied. Cannot continue.");
+    return;
   }
+
+  debugPanel.addLog("✅ Permissions ready");
+
+  // Opcionalmente, para evitar el doble prompt en el futuro:
+  localStorage.setItem(PERMISSION_KEY, "true");
+
+  const player = new CosmicMusicPlayer(debugPanel);
+  await player.init();
+  debugPanel.addLog("🎵 App ready");
 });
 
 // Background effects

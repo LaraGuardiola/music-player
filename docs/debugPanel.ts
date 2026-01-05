@@ -102,9 +102,9 @@ export class DebugPanel {
 
     this.log("=== INITIALIZATION START ===");
     await this.checkPlatform();
-    await this.checkPermissions();
+    // await this.checkPermissions();
     await this.scanAudioFiles();
-    await this.getAlbums();
+    // await this.getAlbums();
     this.log("=== INITIALIZATION COMPLETE ===");
   }
 

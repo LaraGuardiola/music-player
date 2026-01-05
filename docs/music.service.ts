@@ -3,6 +3,7 @@ import {
   CapacitorMediaStore,
   MediaType,
 } from "@odion-cloud/capacitor-mediastore";
+import { fetchTracks } from "./api";
 
 interface Track {
   name: string;
@@ -24,7 +25,20 @@ export class MediaStoreService {
     if (!this.isNative()) return true;
 
     try {
+      // 1️⃣ Comprobar estado actual
+      const status = await CapacitorMediaStore.checkPermissions();
+
+      const hasPermission =
+        status.readMediaAudio === "granted" ||
+        status.readExternalStorage === "granted";
+
+      if (hasPermission) {
+        return true;
+      }
+
+      // 2️⃣ Si está en prompt, pedir permisos
       const result = await CapacitorMediaStore.requestPermissions();
+
       return (
         result.readMediaAudio === "granted" ||
         result.readExternalStorage === "granted"
@@ -100,24 +114,16 @@ export class MediaStoreService {
     return uri;
   }
 
-  // static async getPlayableUrl(contentUri: string): Promise<string> {
-  //   if (!Capacitor.isNativePlatform()) return contentUri;
-
-  //   console.log("🎧 Converting MediaStore URI:", contentUri);
-
-  //   const result = await MediaLoader.copyToCache({ uri: contentUri });
-
-  //   (window as any).debugPanel?.addLog("🎵 MediaStore URI converted:");
-  //   (window as any).debugPanel?.addLog(result);
-
-  //   const playableUrl = Capacitor.convertFileSrc(result.path);
-
-  //   console.log("✅ Playable URL:", playableUrl);
-  //   (window as any).debugPanel?.addLog("🎧 Playable URL:");
-  //   (window as any).debugPanel?.addLog(playableUrl);
-
-  //   return playableUrl;
-  // }
+  static async waitForTracks(retries = 5, delay = 400): Promise<Track[]> {
+    for (let i = 0; i < retries; i++) {
+      const tracks = await fetchTracks();
+      if (tracks.length > 0) {
+        return tracks;
+      }
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    return [];
+  }
 
   static async getAlbums() {
     try {
