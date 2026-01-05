@@ -48,6 +48,7 @@ temp/
 # Build outputs
 dist/
 build/
+android/
 
 # Environment variables
 .env
