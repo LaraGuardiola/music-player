@@ -18,6 +18,13 @@ interface Particle {
   vy: number;
 }
 
+// ✅ SOLUCIÓN ALTERNATIVA: Función helper para obtener la URL de los assets
+function getAssetUrl(path: string): string {
+  // En desarrollo usa la ruta relativa
+  // En producción Vite resolverá correctamente
+  return new URL(path, import.meta.url).href;
+}
+
 export class CosmicMusicPlayer {
   private currentTrackIndex: number = 0;
   private isPlaying: boolean = false;
@@ -36,9 +43,23 @@ export class CosmicMusicPlayer {
   private currentTrackArtist: HTMLElement;
   private playlist: HTMLElement;
   private playlistSection: HTMLElement;
-  private debugPanel: DebugPanel;
+  private debugPanel: DebugPanel | null = null;
 
-  constructor() {
+  // Rutas de los iconos usando import.meta
+  private readonly playIconUrl: string;
+  private readonly stopIconUrl: string;
+
+  constructor(debugPanel: DebugPanel) {
+    this.debugPanel = debugPanel;
+
+    try {
+      this.playIconUrl = new URL("./assets/play.svg", import.meta.url).href;
+      this.stopIconUrl = new URL("./assets/stop.svg", import.meta.url).href;
+    } catch (error) {
+      this.playIconUrl = "/assets/play.svg";
+      this.stopIconUrl = "/assets/stop.svg";
+    }
+
     this.audio = document.getElementById("audio-player") as HTMLAudioElement;
     this.playerSection = document.querySelector(
       ".player-section",
@@ -66,10 +87,10 @@ export class CosmicMusicPlayer {
     this.playlistSection = document.querySelector(
       ".playlist-section",
     ) as HTMLElement;
-    this.debugPanel = new DebugPanel();
   }
 
   async init(): Promise<void> {
+    this.debugPanel?.addLog("🎵 Initializing player...");
     await this.setTracks();
     this.setupEventListeners();
     this.renderPlaylist();
@@ -79,13 +100,14 @@ export class CosmicMusicPlayer {
     } else {
       this.currentTrackName.textContent = "No music found";
       this.currentTrackArtist.textContent = "Add MP3 files to your device";
+      this.debugPanel?.addLog("⚠️ No tracks found");
     }
   }
 
   private async setTracks(): Promise<void> {
     this.tracks = await fetchTracks();
     console.log("Tracks loaded:", this.tracks);
-    this.debugPanel.addLog(`✅ Loaded ${this.tracks.length} tracks`);
+    this.debugPanel?.addLog(`✅ Loaded ${this.tracks.length} tracks`);
   }
 
   private setupEventListeners(): void {
@@ -111,6 +133,8 @@ export class CosmicMusicPlayer {
     this.playlistSection.addEventListener("scroll", () =>
       this.handleStickyActiveTrack(),
     );
+
+    this.debugPanel?.addLog("✅ Event listeners setup complete");
   }
 
   private handleStickyActiveTrack(): void {
@@ -173,6 +197,10 @@ export class CosmicMusicPlayer {
       playlistItem.addEventListener("click", () => this.selectTrack(index));
       this.playlist.appendChild(playlistItem);
     });
+
+    this.debugPanel?.addLog(
+      `📋 Playlist rendered: ${this.tracks.length} items`,
+    );
   }
 
   private selectTrack(index: number): void {
@@ -183,6 +211,10 @@ export class CosmicMusicPlayer {
     if (this.isPlaying) {
       this.play();
     }
+
+    this.debugPanel?.addLog(
+      `🎯 Selected track ${index + 1}: ${this.tracks[index].name}`,
+    );
   }
 
   private async loadTrack(index: number): Promise<void> {
@@ -190,7 +222,7 @@ export class CosmicMusicPlayer {
 
     const track = this.tracks[index];
     console.log(`Loading: ${track.name}`);
-    this.debugPanel.addLog(`🎵 Loading: ${track.name}`);
+    this.debugPanel?.addLog(`🎵 Loading: ${track.name}`);
 
     this.currentTrackName.textContent = track.name;
     this.currentTrackArtist.textContent = track.artist;
@@ -200,10 +232,10 @@ export class CosmicMusicPlayer {
     try {
       playableUrl = await MediaStoreService.getPlayableUrl(track.url);
       console.log(`Playable URL: ${playableUrl}`);
-      this.debugPanel.addLog(`✅ Playable URL ready`);
+      this.debugPanel?.addLog(`✅ Playable URL ready`);
     } catch (error) {
       console.error(`Failed to load track: ${error}`);
-      this.debugPanel.addLog(`❌ Failed to load track: ${error}`);
+      this.debugPanel?.addLog(`❌ Failed to load track: ${error}`);
       return;
     }
 
@@ -233,6 +265,9 @@ export class CosmicMusicPlayer {
   }
 
   private togglePlay(): void {
+    this.debugPanel?.addLog(
+      `🎮 Toggle play (current: ${this.isPlaying ? "playing" : "paused"})`,
+    );
     if (this.isPlaying) {
       this.pause();
     } else {
@@ -242,20 +277,20 @@ export class CosmicMusicPlayer {
 
   private play(): void {
     console.log("Attempting to play...");
-    this.debugPanel.addLog("▶️ Play requested");
+    this.debugPanel?.addLog("▶️ Play requested");
 
     this.audio
       .play()
       .then(() => {
         console.log("Playback started");
-        this.debugPanel.addLog("✅ Playback started");
+        this.debugPanel?.addLog("✅ Playback started successfully");
         this.isPlaying = true;
         this.playerSection.classList.add("playing");
         this.updatePlayIcon();
       })
       .catch((error) => {
         console.error("Playback error:", error);
-        this.debugPanel.addLog(`❌ Playback error: ${error.message}`);
+        this.debugPanel?.addLog(`❌ Playback error: ${error.message}`);
         this.startProgressSimulation();
         this.isPlaying = true;
         this.playerSection.classList.add("playing");
@@ -269,18 +304,23 @@ export class CosmicMusicPlayer {
     this.playerSection.classList.remove("playing");
     this.updatePlayIcon();
     this.stopProgressSimulation();
-    this.debugPanel.addLog("⏸️ Paused");
+    this.debugPanel?.addLog("⏸️ Paused");
   }
 
   private updatePlayIcon(): void {
-    // Usar una ruta absoluta o relativa consistente
+    const oldSrc = this.playStopIcon.src;
+
     if (this.isPlaying) {
-      this.playStopIcon.src = "./assets/stop.svg";
+      this.playStopIcon.src = this.stopIconUrl;
       this.playStopIcon.alt = "Stop";
+      this.debugPanel?.addLog(`🎨 Icon: play -> stop`);
     } else {
-      this.playStopIcon.src = "./assets/play.svg";
+      this.playStopIcon.src = this.playIconUrl;
       this.playStopIcon.alt = "Play";
+      this.debugPanel?.addLog(`🎨 Icon: stop -> play`);
     }
+
+    console.log(`Icon: ${oldSrc} -> ${this.playStopIcon.src}`);
   }
 
   private previousTrack(): void {
@@ -296,8 +336,8 @@ export class CosmicMusicPlayer {
       }
     });
 
-    this.debugPanel.addLog(
-      `⏮️ Previous track: ${this.tracks[this.currentTrackIndex].name}`,
+    this.debugPanel?.addLog(
+      `⏮️ Previous: ${this.tracks[this.currentTrackIndex].name}`,
     );
   }
 
@@ -313,8 +353,8 @@ export class CosmicMusicPlayer {
       }
     });
 
-    this.debugPanel.addLog(
-      `⏭️ Next track: ${this.tracks[this.currentTrackIndex].name}`,
+    this.debugPanel?.addLog(
+      `⏭️ Next: ${this.tracks[this.currentTrackIndex].name}`,
     );
   }
 
@@ -327,7 +367,7 @@ export class CosmicMusicPlayer {
     if (this.audio.duration) {
       const newTime = (percentage / 100) * this.audio.duration;
       this.audio.currentTime = newTime;
-      this.debugPanel.addLog(`⏩ Seek to ${this.formatTime(newTime)}`);
+      this.debugPanel?.addLog(`⏩ Seek to ${this.formatTime(newTime)}`);
     } else {
       this.progressFill.style.width = percentage + "%";
     }
@@ -349,7 +389,7 @@ export class CosmicMusicPlayer {
       console.log(
         `Metadata loaded - Duration: ${this.formatTime(this.audio.duration)}`,
       );
-      this.debugPanel.addLog(
+      this.debugPanel?.addLog(
         `📊 Duration: ${this.formatTime(this.audio.duration)}`,
       );
     }
@@ -359,7 +399,7 @@ export class CosmicMusicPlayer {
     const track = this.tracks[this.currentTrackIndex];
     let currentTime = 0;
 
-    this.debugPanel.addLog("⚠️ Using progress simulation (fallback mode)");
+    this.debugPanel?.addLog("⚠️ Using progress simulation (fallback)");
 
     this.progressInterval = window.setInterval(() => {
       if (currentTime >= track.durationSeconds) {
@@ -383,7 +423,7 @@ export class CosmicMusicPlayer {
 
   private onCanPlay(): void {
     console.log("Audio ready to play");
-    this.debugPanel.addLog("✅ Audio ready");
+    this.debugPanel?.addLog("✅ Audio ready");
     this.stopProgressSimulation();
   }
 
@@ -393,23 +433,23 @@ export class CosmicMusicPlayer {
     if (target.error) {
       const errorMsg = `Error code: ${target.error.code}, message: ${target.error.message}`;
       console.error(errorMsg);
-      this.debugPanel.addLog(`❌ Audio error: ${errorMsg}`);
+      this.debugPanel?.addLog(`❌ Audio error: ${errorMsg}`);
     }
   }
 
   private onLoadStart(): void {
     console.log("Loading audio...");
-    this.debugPanel.addLog("⏳ Loading audio...");
+    this.debugPanel?.addLog("⏳ Loading audio...");
   }
 
   private onWaiting(): void {
     console.log("Buffering...");
-    this.debugPanel.addLog("⏳ Buffering...");
+    this.debugPanel?.addLog("⏳ Buffering...");
   }
 
   private onPlaying(): void {
     console.log("Playing");
-    this.debugPanel.addLog("▶️ Playing");
+    this.debugPanel?.addLog("▶️ Playing");
     this.stopProgressSimulation();
   }
 
@@ -442,14 +482,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const debugPanel = new DebugPanel();
   (window as any).debugPanel = debugPanel;
 
+  debugPanel.addLog("🚀 Application starting...");
+
   try {
-    // Initialize music player
     if (await MediaStoreService.requestPermissions()) {
-      const player = new CosmicMusicPlayer();
+      debugPanel.addLog("✅ Permissions granted, initializing player...");
+      const player = new CosmicMusicPlayer(debugPanel);
       await player.init();
+    } else {
+      debugPanel.addLog("❌ Permissions denied");
     }
   } catch (error) {
     console.error("Player initialization error:", error);
+    debugPanel.addLog(`❌ Player init error: ${error}`);
   }
 });
 
