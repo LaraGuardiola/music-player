@@ -1,4 +1,6 @@
-import { fetchTracks } from "./api.js";
+import { fetchTracks } from "./api";
+import { MediaStoreService } from "./music.service";
+import { DebugPanel } from "./debugPanel";
 
 interface Track {
   name: string;
@@ -16,13 +18,11 @@ interface Particle {
   vy: number;
 }
 
-class CosmicMusicPlayer {
+export class CosmicMusicPlayer {
   private currentTrackIndex: number = 0;
   private isPlaying: boolean = false;
   private tracks: Track[] = [];
   private progressInterval?: number;
-
-  // DOM Elements
   private audio: HTMLAudioElement;
   private playerSection: HTMLElement;
   private playBtn: HTMLElement;
@@ -36,28 +36,50 @@ class CosmicMusicPlayer {
   private currentTrackArtist: HTMLElement;
   private playlist: HTMLElement;
   private playlistSection: HTMLElement;
+  private debugPanel: DebugPanel;
 
   constructor() {
     this.audio = document.getElementById("audio-player") as HTMLAudioElement;
-    this.playerSection = document.querySelector(".player-section") as HTMLElement;
+    this.playerSection = document.querySelector(
+      ".player-section",
+    ) as HTMLElement;
     this.playBtn = document.getElementById("play-btn") as HTMLElement;
-    this.playStopIcon = document.querySelector("#play-stop-icon") as HTMLImageElement;
+    this.playStopIcon = document.querySelector(
+      "#play-stop-icon",
+    ) as HTMLImageElement;
     this.prevBtn = document.getElementById("prev-btn") as HTMLElement;
     this.nextBtn = document.getElementById("next-btn") as HTMLElement;
     this.progressFill = document.getElementById("progress-fill") as HTMLElement;
-    this.currentTimeDisplay = document.getElementById("current-time") as HTMLElement;
-    this.totalTimeDisplay = document.getElementById("total-time") as HTMLElement;
-    this.currentTrackName = document.getElementById("current-track-name") as HTMLElement;
-    this.currentTrackArtist = document.getElementById("current-track-artist") as HTMLElement;
+    this.currentTimeDisplay = document.getElementById(
+      "current-time",
+    ) as HTMLElement;
+    this.totalTimeDisplay = document.getElementById(
+      "total-time",
+    ) as HTMLElement;
+    this.currentTrackName = document.getElementById(
+      "current-track-name",
+    ) as HTMLElement;
+    this.currentTrackArtist = document.getElementById(
+      "current-track-artist",
+    ) as HTMLElement;
     this.playlist = document.getElementById("playlist") as HTMLElement;
-    this.playlistSection = document.querySelector(".playlist-section") as HTMLElement;
+    this.playlistSection = document.querySelector(
+      ".playlist-section",
+    ) as HTMLElement;
+    this.debugPanel = new DebugPanel();
   }
 
   async init(): Promise<void> {
     await this.setTracks();
     this.setupEventListeners();
     this.renderPlaylist();
-    this.loadTrack(0);
+
+    if (this.tracks.length > 0) {
+      void this.loadTrack(0);
+    } else {
+      this.currentTrackName.textContent = "No music found";
+      this.currentTrackArtist.textContent = "Add MP3 files to your device";
+    }
   }
 
   private async setTracks(): Promise<void> {
@@ -66,14 +88,10 @@ class CosmicMusicPlayer {
   }
 
   private setupEventListeners(): void {
-    // Play/Pause button
     this.playBtn.addEventListener("click", () => this.togglePlay());
-
-    // Previous/Next buttons
     this.prevBtn.addEventListener("click", () => this.previousTrack());
     this.nextBtn.addEventListener("click", () => this.nextTrack());
 
-    // Audio events
     this.audio.addEventListener("loadedmetadata", () => this.updateTrackInfo());
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
     this.audio.addEventListener("ended", () => this.nextTrack());
@@ -83,40 +101,33 @@ class CosmicMusicPlayer {
     this.audio.addEventListener("waiting", () => this.onWaiting());
     this.audio.addEventListener("playing", () => this.onPlaying());
 
-    // Progress bar click (for seeking)
     document
       .querySelector(".progress-bar")!
       .addEventListener("click", (e) => this.seek(e as MouseEvent));
 
-    // Keyboard shortcuts
     document.addEventListener("keydown", (e) => this.handleKeyboard(e));
 
-    // Playlist scroll with dynamic sticky behavior
-    this.playlistSection.addEventListener("scroll", () => this.handleStickyActiveTrack());
+    this.playlistSection.addEventListener("scroll", () =>
+      this.handleStickyActiveTrack(),
+    );
   }
 
-  /**
-   * Maneja el comportamiento sticky del track activo de forma dinámica.
-   * El track se pega arriba si se está saliendo por la parte superior,
-   * y abajo si se está saliendo por la parte inferior del contenedor.
-   */
   private handleStickyActiveTrack(): void {
-    const activeItem = this.playlist.querySelector(".playlist-item.active") as HTMLElement;
+    const activeItem = this.playlist.querySelector(
+      ".playlist-item.active",
+    ) as HTMLElement;
     if (!activeItem) return;
 
     const containerRect = this.playlistSection.getBoundingClientRect();
     const activeRect = activeItem.getBoundingClientRect();
+    const STICKY_THRESHOLD = 30;
 
-    const STICKY_THRESHOLD = 30; // Píxeles de margen antes de activar sticky
-
-    // Calcular si el elemento está saliendo del viewport
     const isExitingTop = activeRect.top < containerRect.top + STICKY_THRESHOLD;
-    const isExitingBottom = activeRect.bottom > containerRect.bottom - STICKY_THRESHOLD;
+    const isExitingBottom =
+      activeRect.bottom > containerRect.bottom - STICKY_THRESHOLD;
 
-    // Remover todas las clases sticky primero
     activeItem.classList.remove("sticky-active", "sticky-active-bottom");
 
-    // Aplicar la clase correspondiente según por dónde esté saliendo
     if (isExitingTop) {
       activeItem.classList.add("sticky-active");
     } else if (isExitingBottom) {
@@ -127,64 +138,91 @@ class CosmicMusicPlayer {
   private renderPlaylist(): void {
     this.playlist.innerHTML = "";
 
-    if (Array.isArray(this.tracks) && this.tracks.length > 0) {
-      this.tracks.forEach((track, index) => {
-        const playlistItem = document.createElement("div");
-        playlistItem.className = "playlist-item";
-        playlistItem.dataset.index = index.toString();
-
-        playlistItem.innerHTML = `
-          <div class="song-info">
-            <div class="song-name">${track.name.slice(0, -4)}</div>
-            <div class="song-artist">${track.artist}</div>
-          </div>
-          <div class="song-duration">${track.duration}</div>
-        `;
-
-        playlistItem.addEventListener("click", () => this.selectTrack(index));
-        this.playlist.appendChild(playlistItem);
-      });
+    if (this.tracks.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.style.cssText = `
+        padding: 20px;
+        text-align: center;
+        color: #00ffff;
+        font-size: 1.2em;
+      `;
+      emptyMessage.innerHTML = `
+        <p>No music files found 🎵</p>
+        <p style="font-size: 0.8em; margin-top: 10px; color: #cccccc;">
+          Add MP3 files to your Music folder
+        </p>
+      `;
+      this.playlist.appendChild(emptyMessage);
+      return;
     }
+
+    this.tracks.forEach((track, index) => {
+      const playlistItem = document.createElement("div");
+      playlistItem.className = "playlist-item";
+      playlistItem.dataset.index = index.toString();
+
+      playlistItem.innerHTML = `
+        <div class="song-info">
+          <div class="song-name">${track.name}</div>
+          <div class="song-artist">${track.artist}</div>
+        </div>
+        <div class="song-duration">${track.duration}</div>
+      `;
+
+      playlistItem.addEventListener("click", () => this.selectTrack(index));
+      this.playlist.appendChild(playlistItem);
+    });
   }
 
   private selectTrack(index: number): void {
     this.currentTrackIndex = index;
-    this.loadTrack(index);
+    void this.loadTrack(index);
     this.updateActiveTrack();
 
-    // Auto-play when selecting a track
     if (this.isPlaying) {
       this.play();
     }
   }
 
-  private loadTrack(index: number): void {
-    if (Array.isArray(this.tracks) && this.tracks.length > 0) {
-      const track = this.tracks[index];
-      this.currentTrackName.textContent = track.name.slice(0, -4);
-      this.currentTrackArtist.textContent = track.artist;
+  private async loadTrack(index: number): Promise<void> {
+    if (this.tracks.length === 0) return;
 
-      this.audio.src = track.url;
-      this.audio.load();
+    const track = this.tracks[index];
+    console.log(`Loading: ${track.name}`);
+    console.log(`Original URI: ${track.url}`);
 
-      // Reset progress display
-      this.progressFill.style.width = "0%";
-      this.currentTimeDisplay.textContent = "0:00";
-      this.totalTimeDisplay.textContent = track.duration;
+    this.currentTrackName.textContent = track.name;
+    this.currentTrackArtist.textContent = track.artist;
 
-      this.updateActiveTrack();
+    let playableUrl;
+
+    try {
+      playableUrl = await MediaStoreService.getPlayableUrl(track.url);
+      console.log(`Playable URL: ${playableUrl}`);
+      this.debugPanel.addLog(`Playable URL: ${playableUrl}`);
+    } catch (error) {
+      console.error(`Failed to load track: ${error}`);
+      this.debugPanel.addLog(`Failed to load track: ${error}`);
+      return;
     }
+
+    this.audio.src = playableUrl;
+    this.audio.load();
+
+    this.progressFill.style.width = "0%";
+    this.currentTimeDisplay.textContent = "0:00";
+    this.totalTimeDisplay.textContent = track.duration;
+
+    this.updateActiveTrack();
   }
 
   private updateActiveTrack(): void {
-    // Remove all active and sticky classes
     document.querySelectorAll(".playlist-item").forEach((item) => {
       item.classList.remove("active", "sticky-active", "sticky-active-bottom");
     });
 
-    // Add active class to current track
     const activeItem = document.querySelector(
-      `.playlist-item[data-index="${this.currentTrackIndex}"]`
+      `.playlist-item[data-index="${this.currentTrackIndex}"]`,
     ) as HTMLElement;
 
     if (activeItem) {
@@ -202,15 +240,20 @@ class CosmicMusicPlayer {
   }
 
   private play(): void {
-    this.audio.play().catch((error) => {
-      console.error("Error playing audio:", error);
-      console.log("Make sure the MP3 file exists in the tracks folder");
-      this.startProgressSimulation();
-    });
-
-    this.isPlaying = true;
-    this.playerSection.classList.add("playing");
-    this.playStopIcon.src = "./assets/stop.svg";
+    console.log("Attempting to play...");
+    this.audio
+      .play()
+      .then(() => {
+        console.log("Playback started");
+        this.isPlaying = true;
+        this.playerSection.classList.add("playing");
+        this.playStopIcon.src = "./assets/stop.svg";
+      })
+      .catch((error) => {
+        console.error("Playback error:", error);
+        console.error("Error details:", error.name, error.message);
+        this.startProgressSimulation();
+      });
   }
 
   private pause(): void {
@@ -224,7 +267,7 @@ class CosmicMusicPlayer {
   private previousTrack(): void {
     this.currentTrackIndex =
       (this.currentTrackIndex - 1 + this.tracks.length) % this.tracks.length;
-    this.loadTrack(this.currentTrackIndex);
+    void this.loadTrack(this.currentTrackIndex);
 
     if (this.isPlaying) {
       this.stopProgressSimulation();
@@ -234,7 +277,7 @@ class CosmicMusicPlayer {
 
   private nextTrack(): void {
     this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
-    this.loadTrack(this.currentTrackIndex);
+    void this.loadTrack(this.currentTrackIndex);
 
     if (this.isPlaying) {
       this.stopProgressSimulation();
@@ -260,13 +303,18 @@ class CosmicMusicPlayer {
     if (this.audio.duration) {
       const percentage = (this.audio.currentTime / this.audio.duration) * 100;
       this.progressFill.style.width = percentage + "%";
-      this.currentTimeDisplay.textContent = this.formatTime(this.audio.currentTime);
+      this.currentTimeDisplay.textContent = this.formatTime(
+        this.audio.currentTime,
+      );
     }
   }
 
   private updateTrackInfo(): void {
     if (this.audio.duration) {
       this.totalTimeDisplay.textContent = this.formatTime(this.audio.duration);
+      console.log(
+        `Metadata loaded - Duration: ${this.formatTime(this.audio.duration)}`,
+      );
     }
   }
 
@@ -295,24 +343,30 @@ class CosmicMusicPlayer {
   }
 
   private onCanPlay(): void {
-    console.log("Audio file loaded successfully");
+    console.log("Audio ready to play");
     this.stopProgressSimulation();
   }
 
   private onAudioError(e: Event): void {
     console.error("Audio error:", e);
+    const target = e.target as HTMLAudioElement;
+    if (target.error) {
+      console.error(
+        `Error code: ${target.error.code}, message: ${target.error.message}`,
+      );
+    }
   }
 
   private onLoadStart(): void {
-    console.log("Loading audio file...");
+    console.log("Loading audio...");
   }
 
   private onWaiting(): void {
-    console.log("Audio is buffering...");
+    console.log("Buffering...");
   }
 
   private onPlaying(): void {
-    console.log("Audio is playing");
+    console.log("Playing");
     this.stopProgressSimulation();
   }
 
@@ -340,10 +394,20 @@ class CosmicMusicPlayer {
   }
 }
 
-// Initialize the music player when the page loads
 document.addEventListener("DOMContentLoaded", async () => {
-  const player = new CosmicMusicPlayer();
-  await player.init();
+  console.log("🚀 DOM Loaded");
+  const debugPanel = new DebugPanel();
+  (window as any).debugPanel = debugPanel;
+
+  try {
+    // Initialize music player
+    if (await MediaStoreService.requestPermissions()) {
+      const player = new CosmicMusicPlayer();
+      await player.init();
+    }
+  } catch (error) {
+    console.error("Player initialization error:", error);
+  }
 });
 
 // Background effects

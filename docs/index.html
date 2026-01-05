@@ -2,7 +2,11 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <meta name="theme-color" content="#0a0a0a" />
         <title>Cosmic Music Player</title>
         <link rel="stylesheet" href="style.css" />
         <link
@@ -17,7 +21,6 @@
                     <!-- Playlist items will be populated by JavaScript -->
                 </div>
             </div>
-
             <div class="player-section">
                 <div class="current-track">
                     <div class="track-info">
@@ -38,7 +41,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="controls">
                     <button class="control-btn" id="prev-btn">
                         <img src="./assets/backward.svg" alt="Backward" />
@@ -55,10 +57,11 @@
                     </button>
                 </div>
             </div>
-
             <audio id="audio-player" preload="metadata"></audio>
         </div>
-        <script src="api.ts" type="module"></script>
-        <script src="script.ts" type="module"></script>
+
+        <!-- Scripts - Orden importante -->
+        <script type="module" src="./debugPanel.js"></script>
+        <script type="module" src="./script.js"></script>
     </body>
 </html>

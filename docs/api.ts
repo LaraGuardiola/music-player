@@ -1,38 +1,36 @@
-interface Track {
+import { MediaStoreService } from "./music.service";
+
+export interface Track {
   name: string;
   artist: string;
   url: string;
   duration: string;
   durationSeconds: number;
+  path: string;
+  album?: string;
 }
 
 export async function fetchTracks(): Promise<Track[]> {
   try {
-    const response = await fetch("/api/tracks");
-
-    // Check if response is ok
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Check content type
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("Received non-JSON response:", text.substring(0, 200));
-      throw new Error(`Expected JSON but received: ${contentType}`);
-    }
-
-    const tracks = await response.json();
-
-    if (!Array.isArray(tracks)) {
-      throw new Error("Tracks data is not an array");
-    }
-
-    return tracks;
+    console.log("📱 Fetching tracks using MediaStore...");
+    const deviceTracks = await MediaStoreService.scanDeviceMusic();
+    console.log(`✅ Loaded ${deviceTracks.length} tracks`);
+    return deviceTracks;
   } catch (error) {
-    console.error("Error fetching tracks:", error);
-    // Return empty array as fallback
+    console.error("Error loading device music:", error);
+
+    // Mostrar mensaje al usuario
+    if (error instanceof Error && error.message.includes("permission")) {
+      alert(
+        "⚠️ Storage permission required\n\nPlease grant storage permissions in your device settings to access your music files.",
+      );
+    } else {
+      alert(
+        "❌ Could not load music files\n\nError: " +
+          (error instanceof Error ? error.message : "Unknown error"),
+      );
+    }
+
     return [];
   }
 }

@@ -1,0 +1,12 @@
+{
+  "appId": "com.cosmicplayer.app",
+  "appName": "Cosmic Music Player",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": ["*"]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

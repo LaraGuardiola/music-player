@@ -40,6 +40,8 @@ body::before {
     max-width: 1200px;
     height: 100%;
     margin: 0 auto;
+    margin-top: env(safe-area-inset-top) !important;
+    margin-bottom: env(safe-area-inset-bottom) !important;
     padding: 20px;
 }
 
@@ -63,7 +65,7 @@ body::before {
 }
 
 .player-section {
-    background: background: linear-gradient(
+    background: linear-gradient(
         45deg,
         rgba(255, 0, 150, 0.1),
         rgba(0, 255, 255, 0.1)
@@ -201,15 +203,16 @@ body::before {
     overflow: hidden;
 }
 
-.play-btn img, .control-btn img {
-  width: 33%;
-  height: 33%;
-  object-fit: contain;
+.play-btn img,
+.control-btn img {
+    width: 33%;
+    height: 33%;
+    object-fit: contain;
 }
 
 .control-btn img {
-  width: 40%;
-  height: 40%;
+    width: 40%;
+    height: 40%;
 }
 
 .control-btn::before {
@@ -244,7 +247,7 @@ body::before {
 }
 
 .playlist-section {
-    background: background: linear-gradient(
+    background: linear-gradient(
         45deg,
         rgba(255, 0, 150, 0.1),
         rgba(0, 255, 255, 0.1)
@@ -258,8 +261,8 @@ body::before {
     box-shadow:
         0 0 30px rgba(255, 0, 150, 0.2),
         inset 0 0 30px rgba(0, 255, 255, 0.1);
-    -ms-overflow-style: none;  /* IE y Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE y Edge */
+    scrollbar-width: none; /* Firefox */
 }
 
 .playlist {
@@ -416,26 +419,27 @@ body::before {
     }
 
     .play-btn {
-      width: 60px;
-      height: 60px;
-      border: none;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
+        width: 60px;
+        height: 60px;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
     }
 
-    .play-btn img, .control-btn img {
-      width: 33%;
-      height: 33%;
-      object-fit: contain;
+    .play-btn img,
+    .control-btn img {
+        width: 33%;
+        height: 33%;
+        object-fit: contain;
     }
 
     .control-btn img {
-      width: 40%;
-      height: 40%;
+        width: 40%;
+        height: 40%;
     }
 
     .playlist-item {
