@@ -25,7 +25,7 @@ export class MediaStoreService {
     if (!this.isNative()) return true;
 
     try {
-      // 1️⃣ Comprobar estado actual
+      // check current status
       const status = await CapacitorMediaStore.checkPermissions();
 
       const hasPermission =
@@ -36,7 +36,7 @@ export class MediaStoreService {
         return true;
       }
 
-      // 2️⃣ Si está en prompt, pedir permisos
+      //still "prompted"
       const result = await CapacitorMediaStore.requestPermissions();
 
       return (
@@ -76,7 +76,6 @@ export class MediaStoreService {
           name: file.title || file.displayName || "Unknown",
           artist: file.artist || "Unknown Artist",
           album: file.album || "Unknown Album",
-          // Usar el URI de content:// directamente
           url: file.uri || "",
           path: file.uri || "",
           mediaStoreUri: file.uri || "",
@@ -91,12 +90,12 @@ export class MediaStoreService {
   }
 
   static async getPlayableUrl(uri: string): Promise<string> {
-    // Android file:// directo -> convertir a URL de WebView
+    // Android file:// convert to URL for webview
     if (uri.startsWith("file://")) {
       return Capacitor.convertFileSrc(uri);
     }
 
-    // content:// -> leer como base64 y crear Blob
+    // content:// -> read as base64, then create Blob
     if (uri.startsWith("content://")) {
       try {
         const response = await fetch(uri);
@@ -110,17 +109,13 @@ export class MediaStoreService {
       }
     }
 
-    // fallback
     return uri;
   }
 
-  static async waitForTracks(retries = 5, delay = 400): Promise<Track[]> {
-    for (let i = 0; i < retries; i++) {
-      const tracks = await fetchTracks();
-      if (tracks.length > 0) {
-        return tracks;
-      }
-      await new Promise((r) => setTimeout(r, delay));
+  static async waitForTracks(): Promise<Track[]> {
+    const tracks = await fetchTracks();
+    if (tracks.length > 0) {
+      return tracks;
     }
     return [];
   }

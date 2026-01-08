@@ -1,7 +1,7 @@
-import { fetchTracks } from "./api";
 import { MediaStoreService } from "./music.service";
 import { DebugPanel } from "./debugPanel";
 import { CapacitorMediaStore } from "@odion-cloud/capacitor-mediastore";
+import { createFloatingParticles } from "./background";
 
 interface Track {
   name: string;
@@ -9,14 +9,6 @@ interface Track {
   url: string;
   duration: string;
   durationSeconds: number;
-}
-
-interface Particle {
-  element: HTMLDivElement;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
 }
 
 export class CosmicMusicPlayer {
@@ -55,43 +47,41 @@ export class CosmicMusicPlayer {
 
     this.audio = document.getElementById("audio-player") as HTMLAudioElement;
     this.playerSection = document.querySelector(
-      ".player-section",
+      ".player-section"
     ) as HTMLElement;
     this.playBtn = document.getElementById("play-btn") as HTMLElement;
     this.playStopIcon = document.querySelector(
-      "#play-stop-icon",
+      "#play-stop-icon"
     ) as HTMLImageElement;
     this.prevBtn = document.getElementById("prev-btn") as HTMLElement;
     this.nextBtn = document.getElementById("next-btn") as HTMLElement;
     this.progressFill = document.getElementById("progress-fill") as HTMLElement;
     this.currentTimeDisplay = document.getElementById(
-      "current-time",
+      "current-time"
     ) as HTMLElement;
     this.totalTimeDisplay = document.getElementById(
-      "total-time",
+      "total-time"
     ) as HTMLElement;
     this.currentTrackName = document.getElementById(
-      "current-track-name",
+      "current-track-name"
     ) as HTMLElement;
     this.currentTrackArtist = document.getElementById(
-      "current-track-artist",
+      "current-track-artist"
     ) as HTMLElement;
     this.playlist = document.getElementById("playlist") as HTMLElement;
     this.playlistSection = document.querySelector(
-      ".playlist-section",
+      ".playlist-section"
     ) as HTMLElement;
   }
 
   async init(): Promise<void> {
     this.debugPanel?.addLog("🎵 Initializing player...");
-
-    // ✅ CRÍTICO: Esperar a que se carguen las canciones antes de continuar
     this.debugPanel?.addLog("⏳ Waiting for MediaStore...");
 
     this.tracks = await MediaStoreService.waitForTracks();
 
     this.debugPanel?.addLog(
-      `🎵 MediaStore ready (${this.tracks.length} tracks)`,
+      `🎵 MediaStore ready (${this.tracks.length} tracks)`
     );
 
     this.setupEventListeners();
@@ -99,7 +89,7 @@ export class CosmicMusicPlayer {
 
     if (this.tracks.length > 0) {
       this.debugPanel?.addLog(
-        `✅ Found ${this.tracks.length} tracks, loading first track...`,
+        `✅ Found ${this.tracks.length} tracks, loading first track...`
       );
       void this.loadTrack(0);
     } else {
@@ -109,24 +99,6 @@ export class CosmicMusicPlayer {
     }
 
     this.debugPanel?.addLog("✅ Player initialization complete");
-  }
-
-  private async setTracks(): Promise<void> {
-    this.debugPanel?.addLog("📂 Fetching tracks...");
-
-    try {
-      this.tracks = await fetchTracks();
-      console.log("Tracks loaded:", this.tracks);
-      this.debugPanel?.addLog(`✅ Loaded ${this.tracks.length} tracks`);
-
-      if (this.tracks.length === 0) {
-        this.debugPanel?.addLog("⚠️ No tracks returned from fetchTracks()");
-      }
-    } catch (error) {
-      console.error("Error fetching tracks:", error);
-      this.debugPanel?.addLog(`❌ Error fetching tracks: ${error}`);
-      this.tracks = [];
-    }
   }
 
   private setupEventListeners(): void {
@@ -150,7 +122,7 @@ export class CosmicMusicPlayer {
     document.addEventListener("keydown", (e) => this.handleKeyboard(e));
 
     this.playlistSection.addEventListener("scroll", () =>
-      this.handleStickyActiveTrack(),
+      this.handleStickyActiveTrack()
     );
 
     this.debugPanel?.addLog("✅ Event listeners setup complete");
@@ -158,7 +130,7 @@ export class CosmicMusicPlayer {
 
   private handleStickyActiveTrack(): void {
     const activeItem = this.playlist.querySelector(
-      ".playlist-item.active",
+      ".playlist-item.active"
     ) as HTMLElement;
     if (!activeItem) return;
 
@@ -218,21 +190,24 @@ export class CosmicMusicPlayer {
     });
 
     this.debugPanel?.addLog(
-      `📋 Playlist rendered: ${this.tracks.length} items`,
+      `📋 Playlist rendered: ${this.tracks.length} items`
     );
   }
 
   private selectTrack(index: number): void {
     this.currentTrackIndex = index;
-    void this.loadTrack(index);
-    this.updateActiveTrack();
+    void this.loadTrack(index).then(() => {
+      this.updateActiveTrack();
 
-    if (this.isPlaying) {
-      this.play();
-    }
+      const wasPlaying = this.isPlaying;
+
+      if (wasPlaying) {
+        this.play();
+      }
+    });
 
     this.debugPanel?.addLog(
-      `🎯 Selected track ${index + 1}: ${this.tracks[index].name}`,
+      `🎯 Selected track ${index + 1}: ${this.tracks[index].name}`
     );
   }
 
@@ -274,7 +249,7 @@ export class CosmicMusicPlayer {
     });
 
     const activeItem = document.querySelector(
-      `.playlist-item[data-index="${this.currentTrackIndex}"]`,
+      `.playlist-item[data-index="${this.currentTrackIndex}"]`
     ) as HTMLElement;
 
     if (activeItem) {
@@ -285,7 +260,7 @@ export class CosmicMusicPlayer {
 
   private togglePlay(): void {
     this.debugPanel?.addLog(
-      `🎮 Toggle (current: ${this.isPlaying ? "playing" : "paused"})`,
+      `🎮 Toggle (current: ${this.isPlaying ? "playing" : "paused"})`
     );
     if (this.isPlaying) {
       this.pause();
@@ -356,7 +331,7 @@ export class CosmicMusicPlayer {
     });
 
     this.debugPanel?.addLog(
-      `⏮️ Previous: ${this.tracks[this.currentTrackIndex].name}`,
+      `⏮️ Previous: ${this.tracks[this.currentTrackIndex].name}`
     );
   }
 
@@ -373,7 +348,7 @@ export class CosmicMusicPlayer {
     });
 
     this.debugPanel?.addLog(
-      `⏭️ Next: ${this.tracks[this.currentTrackIndex].name}`,
+      `⏭️ Next: ${this.tracks[this.currentTrackIndex].name}`
     );
   }
 
@@ -397,7 +372,7 @@ export class CosmicMusicPlayer {
       const percentage = (this.audio.currentTime / this.audio.duration) * 100;
       this.progressFill.style.width = percentage + "%";
       this.currentTimeDisplay.textContent = this.formatTime(
-        this.audio.currentTime,
+        this.audio.currentTime
       );
     }
   }
@@ -406,10 +381,10 @@ export class CosmicMusicPlayer {
     if (this.audio.duration) {
       this.totalTimeDisplay.textContent = this.formatTime(this.audio.duration);
       console.log(
-        `Metadata loaded - Duration: ${this.formatTime(this.audio.duration)}`,
+        `Metadata loaded - Duration: ${this.formatTime(this.audio.duration)}`
       );
       this.debugPanel?.addLog(
-        `📊 Duration: ${this.formatTime(this.audio.duration)}`,
+        `📊 Duration: ${this.formatTime(this.audio.duration)}`
       );
     }
   }
@@ -542,49 +517,3 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   });
 });
-
-function createFloatingParticles(): void {
-  const particleCount = 50;
-  const particles: Particle[] = [];
-
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement("div");
-    const color = Math.random() > 0.5 ? "#ff0096" : "#00ffff";
-
-    particle.style.position = "fixed";
-    particle.style.width = "2px";
-    particle.style.height = "2px";
-    particle.style.background = color;
-    particle.style.borderRadius = "50%";
-    particle.style.pointerEvents = "none";
-    particle.style.zIndex = "-1";
-    particle.style.opacity = "0.3";
-    particle.style.boxShadow = `0 0 6px ${color}`;
-
-    document.body.appendChild(particle);
-    particles.push({
-      element: particle,
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-    });
-  }
-
-  function animateParticles(): void {
-    particles.forEach((particle) => {
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-
-      if (particle.x < 0 || particle.x > window.innerWidth) particle.vx *= -1;
-      if (particle.y < 0 || particle.y > window.innerHeight) particle.vy *= -1;
-
-      particle.element.style.left = particle.x + "px";
-      particle.element.style.top = particle.y + "px";
-    });
-
-    requestAnimationFrame(animateParticles);
-  }
-
-  animateParticles();
-}

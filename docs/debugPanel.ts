@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import {
+  AlbumResponse,
   CapacitorMediaStore,
   MediaType,
 } from "@odion-cloud/capacitor-mediastore";
@@ -13,12 +14,11 @@ export class DebugPanel {
   constructor() {
     this.panel = this.createPanel();
     this.debugContent = this.panel.querySelector(
-      "#debug-content",
+      "#debug-content"
     ) as HTMLDivElement;
     document.body.appendChild(this.panel);
     this.setupToggle();
 
-    // Agregar un pequeño delay para asegurar que el DOM está listo
     setTimeout(() => {
       this.initialize();
     }, 100);
@@ -85,7 +85,6 @@ export class DebugPanel {
         ? "translateY(0)"
         : "translateY(100%)";
 
-      // Scroll al final cuando se abre
       if (isOpen) {
         setTimeout(() => {
           this.panel.scrollTop = this.panel.scrollHeight;
@@ -101,10 +100,12 @@ export class DebugPanel {
     this.isInitialized = true;
 
     this.log("=== INITIALIZATION START ===");
-    await this.checkPlatform();
+    // await this.checkPlatform();
     // await this.checkPermissions();
     await this.scanAudioFiles();
-    // await this.getAlbums();
+    await this.getAlbums();
+    let wholeAlbumList: AlbumResponse = await CapacitorMediaStore.getAlbums();
+    wholeAlbumList.albums.forEach((al) => this.log(`Album: ${al}`));
     this.log("=== INITIALIZATION COMPLETE ===");
   }
 
@@ -221,7 +222,9 @@ export class DebugPanel {
       if (count > 0 && result.albums) {
         result.albums.slice(0, 3).forEach((album, i) => {
           this.log(
-            `${i + 1}. ${album.name} - ${album.artist} (${album.trackCount} tracks)`,
+            `${i + 1}. ${album.name} - ${album.artist} (${
+              album.trackCount
+            } tracks)`
           );
         });
         if (count > 3) {
@@ -274,7 +277,9 @@ export class DebugPanel {
             color = "#00d4ff"; // cyan claro
           }
 
-          return `<div style="color: ${color}; margin: 2px 0;">${this.escapeHtml(log)}</div>`;
+          return `<div style="color: ${color}; margin: 2px 0;">${this.escapeHtml(
+            log
+          )}</div>`;
         })
         .join("");
 
