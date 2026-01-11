@@ -77,7 +77,7 @@ export class MediaStoreService {
           url: file.uri || "",
           path: file.uri || "",
           mediaStoreUri: file.uri || "",
-          duration: Number(this.formatDuration(durationSeconds)),
+          duration: this.formatDuration(durationSeconds),
           durationSeconds,
           albumArtUri: file.albumArtUri || "",
         };

@@ -230,15 +230,18 @@ export class CosmicMusicPlayer {
     }
 
     this.tracks.forEach((track, index) => {
+      debugPanel.addLog(`🎵 Track ${index + 1}: ${track.duration}`);
       const item = document.createElement("div");
       item.className = "playlist-item";
       item.dataset.index = index.toString();
       item.innerHTML = `
         <div class="song-info">
-          <div class="song-name"><span id="current-track-name">${track.displayName}</span></div>
+          <div class="song-name"><span id="current-track-name">${
+            track.displayName
+          }</span></div>
           <div class="song-artist">${track.artist}</div>
         </div>
-        <div class="song-duration">${track.duration}</div>
+        <div class="song-duration">${track.duration.toString()}</div>
       `;
       item.addEventListener("click", () => this.selectTrack(index));
       this.playlist.appendChild(item);
