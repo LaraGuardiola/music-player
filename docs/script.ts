@@ -3,7 +3,6 @@ import { DebugPanel } from "./debugPanel";
 import { CapacitorMediaStore } from "@odion-cloud/capacitor-mediastore";
 import { App } from "@capacitor/app";
 import { createFloatingParticles } from "./background";
-import { displayActiveOption } from "./utils";
 import { Track } from "./types";
 
 let trackList: Track[] = [];
@@ -145,31 +144,39 @@ export class CosmicMusicPlayer {
     }
   }
 
-  private handleHeaderSongsBtn() {}
+  private handleHeaderSongsBtn() {
+    this.debugPanel?.addLog("Songs button clicked");
+  }
 
-  private handleHeaderAlbumBtn() {}
+  private handleHeaderAlbumBtn() {
+    this.debugPanel?.addLog("Album button clicked");
+  }
 
-  private handleHeaderArtistBtn() {}
+  private handleHeaderArtistBtn() {
+    this.debugPanel?.addLog("Artist button clicked");
+  }
 
-  private handleHeaderPlaylistsBtn() {}
+  private handleHeaderPlaylistsBtn() {
+    this.debugPanel?.addLog("Playlists button clicked");
+  }
 
   private setupEventListeners(): void {
-    // this.headerOptSongs.addEventListener("click", () =>
-    //   this.handleHeaderSongsBtn()
+    this.displayActiveOption();
+
+    // this.headerOptSongs.addEventListener("click", this.handleHeaderSongsBtn);
+    // this.headerOptAlbum.addEventListener("click", this.handleHeaderAlbumBtn);
+    // this.headerOptArtist.addEventListener("click", this.handleHeaderArtistBtn);
+    // this.headerOptPlaylists.addEventListener(
+    //   "click",
+    //   this.handleHeaderPlaylistsBtn
     // );
-    // this.headerOptAlbum.addEventListener("click", () =>
-    //   this.handleHeaderAlbumBtn()
-    // );
-    // this.headerOptArtist.addEventListener("click", () =>
-    //   this.handleHeaderArtistBtn()
-    // );
-    // this.headerOptFavorites.addEventListener("click", () =>
-    //   this.handleHeaderFavoritesBtn()
-    // );
+
+    //music player buttons
     this.playBtn.addEventListener("click", () => this.togglePlay());
     this.prevBtn.addEventListener("click", () => this.previousTrack());
     this.nextBtn.addEventListener("click", () => this.nextTrack());
 
+    //audio player
     this.audio.addEventListener("loadedmetadata", () => this.updateTrackInfo());
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
     this.audio.addEventListener("ended", () => this.nextTrack());
@@ -230,7 +237,9 @@ export class CosmicMusicPlayer {
     }
 
     this.tracks.forEach((track, index) => {
-      debugPanel.addLog(`🎵 Track ${index + 1}: ${track.duration}`);
+      // ✅ Cambiar debugPanel por this.debugPanel
+      this.debugPanel?.addLog(`🎵 Track ${index + 1}: ${track.duration}`);
+
       const item = document.createElement("div");
       item.className = "playlist-item";
       item.dataset.index = index.toString();
@@ -459,6 +468,37 @@ export class CosmicMusicPlayer {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
+
+  private displayActiveOption() {
+    this.headerButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        // Remover clase active de todos los botones
+        this.headerButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const btnText = btn.textContent?.trim();
+        this.debugPanel?.addLog(`✅ ${btnText} selected`);
+
+        switch (btnText) {
+          case "Songs":
+            this.renderPlaylist(); // ✅ Ahora tiene el contexto correcto
+            break;
+          case "Albums":
+            this.playlist.innerHTML =
+              '<div style="padding: 20px; text-align: center; color: #00ffff;">Albums view - Coming soon</div>';
+            break;
+          case "Artists":
+            this.playlist.innerHTML =
+              '<div style="padding: 20px; text-align: center; color: #00ffff;">Artists view - Coming soon</div>';
+            break;
+          case "Playlists":
+            this.playlist.innerHTML =
+              '<div style="padding: 20px; text-align: center; color: #00ffff;">Playlists view - Coming soon</div>';
+            break;
+        }
+      });
+    });
+  }
 }
 
 const PERMISSION_KEY = "media_permissions_granted";
@@ -486,7 +526,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // Background effects
 document.addEventListener("DOMContentLoaded", () => {
-  displayActiveOption();
   createFloatingParticles();
 
   document.addEventListener("mousemove", (e: MouseEvent) => {
