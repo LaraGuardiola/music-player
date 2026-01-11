@@ -1,15 +1,12 @@
 import { MediaStoreService } from "./music.service";
 import { DebugPanel } from "./debugPanel";
 import { CapacitorMediaStore } from "@odion-cloud/capacitor-mediastore";
+import { App } from "@capacitor/app";
 import { createFloatingParticles } from "./background";
+import { displayActiveOption } from "./utils";
+import { Track } from "./types";
 
-interface Track {
-  name: string;
-  artist: string;
-  url: string;
-  duration: string;
-  durationSeconds: number;
-}
+let trackList: Track[] = [];
 
 export class CosmicMusicPlayer {
   private currentTrackIndex: number = 0;
@@ -29,6 +26,11 @@ export class CosmicMusicPlayer {
   private currentTrackArtist: HTMLElement;
   private playlist: HTMLElement;
   private playlistSection: HTMLElement;
+  private headerOptSongs: HTMLElement;
+  private headerOptAlbum: HTMLElement;
+  private headerOptArtist: HTMLElement;
+  private headerOptPlaylists: HTMLElement;
+  private headerButtons!: NodeListOf<HTMLButtonElement>;
   private debugPanel: DebugPanel | null = null;
 
   private readonly playIconUrl: string;
@@ -37,6 +39,7 @@ export class CosmicMusicPlayer {
   constructor(debugPanel: DebugPanel) {
     this.debugPanel = debugPanel;
 
+    //having problems with images in apks, this way is working so I won't bother further
     try {
       this.playIconUrl = new URL("./assets/play.svg", import.meta.url).href;
       this.stopIconUrl = new URL("./assets/stop.svg", import.meta.url).href;
@@ -72,14 +75,26 @@ export class CosmicMusicPlayer {
     this.playlistSection = document.querySelector(
       ".playlist-section"
     ) as HTMLElement;
+    this.headerOptSongs = document.getElementById(
+      "header-opt-playlist"
+    ) as HTMLElement;
+    this.headerOptAlbum = document.getElementById(
+      "header-opt-album"
+    ) as HTMLElement;
+    this.headerOptArtist = document.getElementById(
+      "header-opt-artist"
+    ) as HTMLElement;
+    this.headerOptPlaylists = document.getElementById(
+      "header-opt-playlists"
+    ) as HTMLElement;
+    this.headerButtons = document.querySelectorAll(".header-option");
   }
 
   async init(): Promise<void> {
     this.debugPanel?.addLog("🎵 Initializing player...");
     this.debugPanel?.addLog("⏳ Waiting for MediaStore...");
 
-    this.tracks = await MediaStoreService.waitForTracks();
-
+    this.tracks = [...trackList];
     this.debugPanel?.addLog(
       `🎵 MediaStore ready (${this.tracks.length} tracks)`
     );
@@ -87,21 +102,68 @@ export class CosmicMusicPlayer {
     this.setupEventListeners();
     this.renderPlaylist();
 
-    if (this.tracks.length > 0) {
-      this.debugPanel?.addLog(
-        `✅ Found ${this.tracks.length} tracks, loading first track...`
-      );
-      void this.loadTrack(0);
+    // Catch launch intent
+    const intentInfo = await App.getLaunchUrl();
+
+    if (intentInfo?.url) {
+      this.debugPanel?.addLog(`📎 Opened with file: ${intentInfo.url}`);
+      await this.loadFromUri(intentInfo.url);
     } else {
-      this.currentTrackName.textContent = "No music found";
-      this.currentTrackArtist.textContent = "Add MP3 files to your device";
-      this.debugPanel?.addLog("⚠️ No tracks found");
+      this.debugPanel?.addLog("ℹ️ File not found - select a track to play");
+      this.currentTrackName.textContent = "Select a track";
     }
 
-    this.debugPanel?.addLog("✅ Player initialization complete");
+    this.debugPanel?.addLog("✅ Player ready");
   }
 
+  private decodeFileNameFromUrl(url: string): string {
+    const fileName = url.split("/").pop() ?? url;
+
+    const decoded = decodeURIComponent(fileName);
+
+    return decoded.replace(/\.[^/.]+$/, "");
+  }
+
+  private async loadFromUri(uri: string): Promise<void> {
+    this.debugPanel?.addLog(`🔍 Searching for: ${uri}`);
+
+    const filename = this.decodeFileNameFromUrl(uri);
+    this.debugPanel?.addLog(`🔎 Cleaned filename: ${filename}`);
+
+    const trackIndex = this.tracks.findIndex((track) =>
+      track.url.includes(filename)
+    );
+
+    if (trackIndex !== -1) {
+      this.debugPanel?.addLog(`✅ Found: ${this.tracks[trackIndex].name}`);
+      this.currentTrackIndex = trackIndex;
+      await this.loadTrack(trackIndex).then(() => this.play());
+    } else {
+      this.debugPanel?.addLog("⚠️ File not in library, loading directly...");
+    }
+  }
+
+  private handleHeaderSongsBtn() {}
+
+  private handleHeaderAlbumBtn() {}
+
+  private handleHeaderArtistBtn() {}
+
+  private handleHeaderPlaylistsBtn() {}
+
   private setupEventListeners(): void {
+    // this.headerOptSongs.addEventListener("click", () =>
+    //   this.handleHeaderSongsBtn()
+    // );
+    // this.headerOptAlbum.addEventListener("click", () =>
+    //   this.handleHeaderAlbumBtn()
+    // );
+    // this.headerOptArtist.addEventListener("click", () =>
+    //   this.handleHeaderArtistBtn()
+    // );
+    // this.headerOptFavorites.addEventListener("click", () =>
+    //   this.handleHeaderFavoritesBtn()
+    // );
     this.playBtn.addEventListener("click", () => this.togglePlay());
     this.prevBtn.addEventListener("click", () => this.previousTrack());
     this.nextBtn.addEventListener("click", () => this.nextTrack());
@@ -118,14 +180,17 @@ export class CosmicMusicPlayer {
     document
       .querySelector(".progress-bar")!
       .addEventListener("click", (e) => this.seek(e as MouseEvent));
-
-    document.addEventListener("keydown", (e) => this.handleKeyboard(e));
-
     this.playlistSection.addEventListener("scroll", () =>
       this.handleStickyActiveTrack()
     );
 
-    this.debugPanel?.addLog("✅ Event listeners setup complete");
+    // Listener para archivos abiertos mientras la app está activa
+    App.addListener("appUrlOpen", (data) => {
+      this.debugPanel?.addLog(`🔄 New file opened: ${data.url}`);
+      void this.loadFromUri(data.url);
+    });
+
+    this.debugPanel?.addLog("✅ Event listeners ready");
   }
 
   private handleStickyActiveTrack(): void {
@@ -138,15 +203,11 @@ export class CosmicMusicPlayer {
     const activeRect = activeItem.getBoundingClientRect();
     const STICKY_THRESHOLD = 30;
 
-    const isExitingTop = activeRect.top < containerRect.top + STICKY_THRESHOLD;
-    const isExitingBottom =
-      activeRect.bottom > containerRect.bottom - STICKY_THRESHOLD;
-
     activeItem.classList.remove("sticky-active", "sticky-active-bottom");
 
-    if (isExitingTop) {
+    if (activeRect.top < containerRect.top + STICKY_THRESHOLD) {
       activeItem.classList.add("sticky-active");
-    } else if (isExitingBottom) {
+    } else if (activeRect.bottom > containerRect.bottom - STICKY_THRESHOLD) {
       activeItem.classList.add("sticky-active-bottom");
     }
   }
@@ -155,92 +216,71 @@ export class CosmicMusicPlayer {
     this.playlist.innerHTML = "";
 
     if (this.tracks.length === 0) {
-      const emptyMessage = document.createElement("div");
-      emptyMessage.style.cssText = `
-        padding: 20px;
-        text-align: center;
-        color: #00ffff;
-        font-size: 1.2em;
+      this.playlist.innerHTML = `
+        <div style="padding: 20px; text-align: center; color: #00ffff; font-size: 1.2em;">
+          <p>No music files found 🎵</p>
+          <p style="font-size: 0.8em; margin-top: 10px; color: #cccccc;">
+            Add MP3 files to your Music folder
+          </p>
+        </div>
       `;
-      emptyMessage.innerHTML = `
-        <p>No music files found 🎵</p>
-        <p style="font-size: 0.8em; margin-top: 10px; color: #cccccc;">
-          Add MP3 files to your Music folder
-        </p>
-      `;
-      this.playlist.appendChild(emptyMessage);
       return;
     }
 
     this.tracks.forEach((track, index) => {
-      const playlistItem = document.createElement("div");
-      playlistItem.className = "playlist-item";
-      playlistItem.dataset.index = index.toString();
-
-      playlistItem.innerHTML = `
+      const item = document.createElement("div");
+      item.className = "playlist-item";
+      item.dataset.index = index.toString();
+      item.innerHTML = `
         <div class="song-info">
-          <div class="song-name">${track.name}</div>
+          <div class="song-name"><span id="current-track-name">${track.name}</span></div>
           <div class="song-artist">${track.artist}</div>
         </div>
         <div class="song-duration">${track.duration}</div>
       `;
-
-      playlistItem.addEventListener("click", () => this.selectTrack(index));
-      this.playlist.appendChild(playlistItem);
+      item.addEventListener("click", () => this.selectTrack(index));
+      this.playlist.appendChild(item);
     });
 
-    this.debugPanel?.addLog(
-      `📋 Playlist rendered: ${this.tracks.length} items`
-    );
+    this.debugPanel?.addLog(`📋 Playlist: ${this.tracks.length} tracks`);
   }
 
   private selectTrack(index: number): void {
     this.currentTrackIndex = index;
+    const wasPlaying = this.isPlaying;
+
     void this.loadTrack(index).then(() => {
       this.updateActiveTrack();
-
-      const wasPlaying = this.isPlaying;
-
-      if (wasPlaying) {
-        this.play();
-      }
+      if (wasPlaying) this.play();
     });
 
-    this.debugPanel?.addLog(
-      `🎯 Selected track ${index + 1}: ${this.tracks[index].name}`
-    );
+    this.debugPanel?.addLog(`🎯 Selected: ${this.tracks[index].name}`);
   }
 
   private async loadTrack(index: number): Promise<void> {
     if (this.tracks.length === 0) return;
 
     const track = this.tracks[index];
-    console.log(`Loading: ${track.name}`);
     this.debugPanel?.addLog(`🎵 Loading: ${track.name}`);
+    this.debugPanel?.addLog(`🔎 URL: ${track.url}`);
 
     this.currentTrackName.textContent = track.name;
     this.currentTrackArtist.textContent = track.artist;
 
-    let playableUrl;
-
     try {
-      playableUrl = await MediaStoreService.getPlayableUrl(track.url);
-      console.log(`Playable URL: ${playableUrl}`);
-      this.debugPanel?.addLog(`✅ Playable URL ready`);
+      const playableUrl = await MediaStoreService.getPlayableUrl(track.url);
+      this.audio.src = playableUrl;
+      this.audio.load();
+
+      this.progressFill.style.width = "0%";
+      this.currentTimeDisplay.textContent = "0:00";
+      this.totalTimeDisplay.textContent = track.duration;
+
+      this.updateActiveTrack();
+      this.debugPanel?.addLog(`✅ Ready to play`);
     } catch (error) {
-      console.error(`Failed to load track: ${error}`);
-      this.debugPanel?.addLog(`❌ Failed to load track: ${error}`);
-      return;
+      this.debugPanel?.addLog(`❌ Failed: ${error}`);
     }
-
-    this.audio.src = playableUrl;
-    this.audio.load();
-
-    this.progressFill.style.width = "0%";
-    this.currentTimeDisplay.textContent = "0:00";
-    this.totalTimeDisplay.textContent = track.duration;
-
-    this.updateActiveTrack();
   }
 
   private updateActiveTrack(): void {
@@ -251,7 +291,6 @@ export class CosmicMusicPlayer {
     const activeItem = document.querySelector(
       `.playlist-item[data-index="${this.currentTrackIndex}"]`
     ) as HTMLElement;
-
     if (activeItem) {
       activeItem.classList.add("active");
       activeItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -259,9 +298,6 @@ export class CosmicMusicPlayer {
   }
 
   private togglePlay(): void {
-    this.debugPanel?.addLog(
-      `🎮 Toggle (current: ${this.isPlaying ? "playing" : "paused"})`
-    );
     if (this.isPlaying) {
       this.pause();
     } else {
@@ -270,20 +306,15 @@ export class CosmicMusicPlayer {
   }
 
   private play(): void {
-    console.log("Attempting to play...");
-    this.debugPanel?.addLog("▶️ Play requested");
-
+    this.debugPanel?.addLog("▶️ Playing");
     this.audio
       .play()
       .then(() => {
-        console.log("Playback started");
-        this.debugPanel?.addLog("✅ Playback started");
         this.isPlaying = true;
         this.playerSection.classList.add("playing");
         this.updatePlayIcon();
       })
       .catch((error) => {
-        console.error("Playback error:", error);
         this.debugPanel?.addLog(`❌ Playback error: ${error.message}`);
         this.startProgressSimulation();
         this.isPlaying = true;
@@ -302,66 +333,47 @@ export class CosmicMusicPlayer {
   }
 
   private updatePlayIcon(): void {
-    const oldSrc = this.playStopIcon.src;
-
-    if (this.isPlaying) {
-      this.playStopIcon.src = this.stopIconUrl;
-      this.playStopIcon.alt = "Stop";
-      this.debugPanel?.addLog(`🎨 Icon: play -> stop`);
-    } else {
-      this.playStopIcon.src = this.playIconUrl;
-      this.playStopIcon.alt = "Play";
-      this.debugPanel?.addLog(`🎨 Icon: stop -> play`);
-    }
-
-    console.log(`Icon: ${oldSrc} -> ${this.playStopIcon.src}`);
+    this.playStopIcon.src = this.isPlaying
+      ? this.stopIconUrl
+      : this.playIconUrl;
+    this.playStopIcon.alt = this.isPlaying ? "Stop" : "Play";
   }
 
   private previousTrack(): void {
+    if (this.tracks.length === 0) return;
+
     this.currentTrackIndex =
       (this.currentTrackIndex - 1 + this.tracks.length) % this.tracks.length;
-
     const wasPlaying = this.isPlaying;
 
     this.stopProgressSimulation();
     void this.loadTrack(this.currentTrackIndex).then(() => {
-      if (wasPlaying) {
-        this.play();
-      }
+      if (wasPlaying) this.play();
     });
 
-    this.debugPanel?.addLog(
-      `⏮️ Previous: ${this.tracks[this.currentTrackIndex].name}`
-    );
+    this.debugPanel?.addLog(`⏮️ Previous`);
   }
 
   private nextTrack(): void {
-    this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+    if (this.tracks.length === 0) return;
 
+    this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
     const wasPlaying = this.isPlaying;
 
     this.stopProgressSimulation();
     void this.loadTrack(this.currentTrackIndex).then(() => {
-      if (wasPlaying) {
-        this.play();
-      }
+      if (wasPlaying) this.play();
     });
 
-    this.debugPanel?.addLog(
-      `⏭️ Next: ${this.tracks[this.currentTrackIndex].name}`
-    );
+    this.debugPanel?.addLog(`⏭️ Next`);
   }
 
   private seek(e: MouseEvent): void {
     const progressBar = e.currentTarget as HTMLElement;
-    const clickX = e.offsetX;
-    const width = progressBar.offsetWidth;
-    const percentage = (clickX / width) * 100;
+    const percentage = (e.offsetX / progressBar.offsetWidth) * 100;
 
     if (this.audio.duration) {
-      const newTime = (percentage / 100) * this.audio.duration;
-      this.audio.currentTime = newTime;
-      this.debugPanel?.addLog(`⏩ Seek to ${this.formatTime(newTime)}`);
+      this.audio.currentTime = (percentage / 100) * this.audio.duration;
     } else {
       this.progressFill.style.width = percentage + "%";
     }
@@ -380,9 +392,6 @@ export class CosmicMusicPlayer {
   private updateTrackInfo(): void {
     if (this.audio.duration) {
       this.totalTimeDisplay.textContent = this.formatTime(this.audio.duration);
-      console.log(
-        `Metadata loaded - Duration: ${this.formatTime(this.audio.duration)}`
-      );
       this.debugPanel?.addLog(
         `📊 Duration: ${this.formatTime(this.audio.duration)}`
       );
@@ -390,20 +399,21 @@ export class CosmicMusicPlayer {
   }
 
   private startProgressSimulation(): void {
+    if (this.tracks.length === 0) return;
+
     const track = this.tracks[this.currentTrackIndex];
     let currentTime = 0;
 
-    this.debugPanel?.addLog("⚠️ Progress simulation (fallback)");
-
     this.progressInterval = window.setInterval(() => {
       if (currentTime >= track.durationSeconds) {
+        this.stopProgressSimulation();
         this.nextTrack();
         return;
       }
 
       currentTime += 1;
-      const percentage = (currentTime / track.durationSeconds) * 100;
-      this.progressFill.style.width = percentage + "%";
+      this.progressFill.style.width =
+        (currentTime / track.durationSeconds) * 100 + "%";
       this.currentTimeDisplay.textContent = this.formatTime(currentTime);
     }, 1000);
   }
@@ -416,34 +426,26 @@ export class CosmicMusicPlayer {
   }
 
   private onCanPlay(): void {
-    console.log("Audio ready to play");
     this.debugPanel?.addLog("✅ Audio ready");
     this.stopProgressSimulation();
   }
 
   private onAudioError(e: Event): void {
-    console.error("Audio error:", e);
     const target = e.target as HTMLAudioElement;
     if (target.error) {
-      const errorMsg = `Error ${target.error.code}: ${target.error.message}`;
-      console.error(errorMsg);
-      this.debugPanel?.addLog(`❌ Audio: ${errorMsg}`);
+      this.debugPanel?.addLog(`❌ Error ${target.error.code}`);
     }
   }
 
   private onLoadStart(): void {
-    console.log("Loading audio...");
-    this.debugPanel?.addLog("⏳ Loading audio...");
+    this.debugPanel?.addLog("⏳ Loading...");
   }
 
   private onWaiting(): void {
-    console.log("Buffering...");
     this.debugPanel?.addLog("⏳ Buffering...");
   }
 
   private onPlaying(): void {
-    console.log("Playing");
-    this.debugPanel?.addLog("▶️ Playing");
     this.stopProgressSimulation();
   }
 
@@ -452,51 +454,34 @@ export class CosmicMusicPlayer {
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
-
-  private handleKeyboard(e: KeyboardEvent): void {
-    switch (e.code) {
-      case "Space":
-        e.preventDefault();
-        this.togglePlay();
-        break;
-      case "ArrowLeft":
-        e.preventDefault();
-        this.previousTrack();
-        break;
-      case "ArrowRight":
-        e.preventDefault();
-        this.nextTrack();
-        break;
-    }
-  }
 }
 
 const PERMISSION_KEY = "media_permissions_granted";
-document.addEventListener("DOMContentLoaded", async () => {
-  const debugPanel = new DebugPanel();
-  (window as any).debugPanel = debugPanel;
-  debugPanel.addLog("🚀 Application starting...");
-  debugPanel.addLog("🔐 Requesting permissions...");
+const debugPanel = new DebugPanel();
+(window as any).debugPanel = debugPanel;
 
+document.addEventListener("load", async () => {
+  debugPanel.addLog("🚀 Starting...");
   const hasPermission = await CapacitorMediaStore.checkPermissions();
-
   if (!hasPermission) {
-    debugPanel.addLog("❌ Permissions denied. Cannot continue.");
+    debugPanel.addLog("❌ Permissions denied");
     return;
   }
 
-  debugPanel.addLog("✅ Permissions ready");
-
-  // Opcionalmente, para evitar el doble prompt en el futuro:
+  debugPanel.addLog("✅ Permissions granted");
   localStorage.setItem(PERMISSION_KEY, "true");
+});
 
+document.addEventListener("DOMContentLoaded", async () => {
+  trackList = await MediaStoreService.waitForTracks();
   const player = new CosmicMusicPlayer(debugPanel);
   await player.init();
-  debugPanel.addLog("🎵 App ready");
+  debugPanel.addLog("🎵 Ready");
 });
 
 // Background effects
 document.addEventListener("DOMContentLoaded", () => {
+  displayActiveOption();
   createFloatingParticles();
 
   document.addEventListener("mousemove", (e: MouseEvent) => {

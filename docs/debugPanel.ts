@@ -286,7 +286,7 @@ export class DebugPanel {
       this.debugContent.innerHTML = html;
 
       // Auto-scroll al final
-      this.panel.scrollTop = this.panel.scrollHeight;
+      // this.panel.scrollTop = this.panel.scrollHeight;
     } catch (error) {
       console.error("Render error:", error);
     }
