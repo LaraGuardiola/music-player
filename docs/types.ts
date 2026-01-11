@@ -1,7 +1,6 @@
-export interface Track {
-  name: string;
-  artist: string;
-  url: string;
-  duration: string;
+import { MediaFile } from "@odion-cloud/capacitor-mediastore";
+
+export interface Track extends MediaFile {
   durationSeconds: number;
+  artist: string;
 }

@@ -13,8 +13,8 @@ export const displayActiveOption = () => {
 
 export const sortPlaylistByName = (tracks: Track[]) => {
   return tracks.sort((a, b) => {
-    const nombreA = a.name.toUpperCase();
-    const nombreB = b.name.toUpperCase();
+    const nombreA = a.displayName.toUpperCase();
+    const nombreB = b.displayName.toUpperCase();
 
     if (nombreA < nombreB) {
       return -1;

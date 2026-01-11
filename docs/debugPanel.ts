@@ -103,9 +103,9 @@ export class DebugPanel {
     // await this.checkPlatform();
     // await this.checkPermissions();
     await this.scanAudioFiles();
-    await this.getAlbums();
-    let wholeAlbumList: AlbumResponse = await CapacitorMediaStore.getAlbums();
-    wholeAlbumList.albums.forEach((al) => this.log(`Album: ${al}`));
+    // await this.getAlbums();
+    // let wholeAlbumList: AlbumResponse = await CapacitorMediaStore.getAlbums();
+    // wholeAlbumList.albums.forEach((al) => this.log(`Album: ${al}`));
     this.log("=== INITIALIZATION COMPLETE ===");
   }
 

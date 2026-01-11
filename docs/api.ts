@@ -1,14 +1,6 @@
+import { MediaFile } from "@odion-cloud/capacitor-mediastore";
 import { MediaStoreService } from "./music.service";
-
-export interface Track {
-  name: string;
-  artist: string;
-  url: string;
-  duration: string;
-  durationSeconds: number;
-  path: string;
-  album?: string;
-}
+import { Track } from "./types";
 
 export async function fetchTracks(): Promise<Track[]> {
   try {
@@ -22,12 +14,12 @@ export async function fetchTracks(): Promise<Track[]> {
     // Mostrar mensaje al usuario
     if (error instanceof Error && error.message.includes("permission")) {
       alert(
-        "⚠️ Storage permission required\n\nPlease grant storage permissions in your device settings to access your music files.",
+        "⚠️ Storage permission required\n\nPlease grant storage permissions in your device settings to access your music files."
       );
     } else {
       alert(
         "❌ Could not load music files\n\nError: " +
-          (error instanceof Error ? error.message : "Unknown error"),
+          (error instanceof Error ? error.message : "Unknown error")
       );
     }
 

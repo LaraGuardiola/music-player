@@ -131,11 +131,13 @@ export class CosmicMusicPlayer {
     this.debugPanel?.addLog(`🔎 Cleaned filename: ${filename}`);
 
     const trackIndex = this.tracks.findIndex((track) =>
-      track.url.includes(filename)
+      track.uri.includes(filename)
     );
 
     if (trackIndex !== -1) {
-      this.debugPanel?.addLog(`✅ Found: ${this.tracks[trackIndex].name}`);
+      this.debugPanel?.addLog(
+        `✅ Found: ${this.tracks[trackIndex].displayName}`
+      );
       this.currentTrackIndex = trackIndex;
       await this.loadTrack(trackIndex).then(() => this.play());
     } else {
@@ -233,7 +235,7 @@ export class CosmicMusicPlayer {
       item.dataset.index = index.toString();
       item.innerHTML = `
         <div class="song-info">
-          <div class="song-name"><span id="current-track-name">${track.name}</span></div>
+          <div class="song-name"><span id="current-track-name">${track.displayName}</span></div>
           <div class="song-artist">${track.artist}</div>
         </div>
         <div class="song-duration">${track.duration}</div>
@@ -254,27 +256,27 @@ export class CosmicMusicPlayer {
       if (wasPlaying) this.play();
     });
 
-    this.debugPanel?.addLog(`🎯 Selected: ${this.tracks[index].name}`);
+    this.debugPanel?.addLog(`🎯 Selected: ${this.tracks[index].displayName}`);
   }
 
   private async loadTrack(index: number): Promise<void> {
     if (this.tracks.length === 0) return;
 
     const track = this.tracks[index];
-    this.debugPanel?.addLog(`🎵 Loading: ${track.name}`);
-    this.debugPanel?.addLog(`🔎 URL: ${track.url}`);
+    this.debugPanel?.addLog(`🎵 Loading: ${track.displayName}`);
+    this.debugPanel?.addLog(`🔎 URL: ${track.uri}`);
 
-    this.currentTrackName.textContent = track.name;
+    this.currentTrackName.textContent = track.displayName;
     this.currentTrackArtist.textContent = track.artist;
 
     try {
-      const playableUrl = await MediaStoreService.getPlayableUrl(track.url);
+      const playableUrl = await MediaStoreService.getPlayableUrl(track.uri);
       this.audio.src = playableUrl;
       this.audio.load();
 
       this.progressFill.style.width = "0%";
       this.currentTimeDisplay.textContent = "0:00";
-      this.totalTimeDisplay.textContent = track.duration;
+      this.totalTimeDisplay.textContent = track.durationSeconds.toString();
 
       this.updateActiveTrack();
       this.debugPanel?.addLog(`✅ Ready to play`);

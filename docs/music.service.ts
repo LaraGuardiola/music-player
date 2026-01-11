@@ -1,20 +1,11 @@
 import { Capacitor } from "@capacitor/core";
 import {
   CapacitorMediaStore,
+  MediaFile,
   MediaType,
 } from "@odion-cloud/capacitor-mediastore";
 import { fetchTracks } from "./api";
-
-interface Track {
-  name: string;
-  artist: string;
-  url: string;
-  duration: string;
-  durationSeconds: number;
-  path: string;
-  album?: string;
-  mediaStoreUri?: string; // URI original de MediaStore
-}
+import { Track } from "./types";
 
 export class MediaStoreService {
   static isNative(): boolean {
@@ -73,14 +64,22 @@ export class MediaStoreService {
         const durationSeconds = Math.floor((file.duration || 0) / 1000);
 
         return {
-          name: file.title || file.displayName || "Unknown",
+          id: file.id,
+          uri: file.uri || "",
+          size: file.size || 0,
+          displayName: file.displayName || "",
+          mimeType: file.mimeType || "",
+          dateAdded: file.dateAdded,
+          dateModified: file.dateModified,
+          mediaType: file.mediaType || "",
           artist: file.artist || "Unknown Artist",
           album: file.album || "Unknown Album",
           url: file.uri || "",
           path: file.uri || "",
           mediaStoreUri: file.uri || "",
-          duration: this.formatDuration(durationSeconds),
+          duration: Number(this.formatDuration(durationSeconds)),
           durationSeconds,
+          albumArtUri: file.albumArtUri || "",
         };
       });
     } catch (error) {
@@ -120,63 +119,63 @@ export class MediaStoreService {
     return [];
   }
 
-  static async getAlbums() {
-    try {
-      const result = await CapacitorMediaStore.getAlbums();
-      return result.albums || [];
-    } catch (error) {
-      console.error("Error getting albums:", error);
-      return [];
-    }
-  }
+  // static async getAlbums() {
+  //   try {
+  //     const result = await CapacitorMediaStore.getAlbums();
+  //     return result.albums || [];
+  //   } catch (error) {
+  //     console.error("Error getting albums:", error);
+  //     return [];
+  //   }
+  // }
 
-  static async getTracksByArtist(artistName: string): Promise<Track[]> {
-    try {
-      const result = await CapacitorMediaStore.getMediasByType({
-        mediaType: MediaType.AUDIO,
-        artistName,
-        includeExternal: true,
-      });
+  // static async getTracksByArtist(artistName: string): Promise<Track[]> {
+  //   try {
+  //     const result = await CapacitorMediaStore.getMediasByType({
+  //       mediaType: MediaType.AUDIO,
+  //       artistName,
+  //       includeExternal: true,
+  //     });
 
-      return result.media.map((file) => ({
-        name: file.title || "Unknown",
-        artist: file.artist || "Unknown Artist",
-        album: file.album || "Unknown Album",
-        url: file.uri || "",
-        path: file.uri || "",
-        mediaStoreUri: file.uri || "",
-        duration: this.formatDuration(Math.floor((file.duration || 0) / 1000)),
-        durationSeconds: Math.floor((file.duration || 0) / 1000),
-      }));
-    } catch (error) {
-      console.error("Error getting tracks by artist:", error);
-      return [];
-    }
-  }
+  //     return result.media.map((file) => ({
+  //       name: file.title || "Unknown",
+  //       artist: file.artist || "Unknown Artist",
+  //       album: file.album || "Unknown Album",
+  //       url: file.uri || "",
+  //       path: file.uri || "",
+  //       mediaStoreUri: file.uri || "",
+  //       duration: this.formatDuration(Math.floor((file.duration || 0) / 1000)),
+  //       durationSeconds: Math.floor((file.duration || 0) / 1000),
+  //     }));
+  //   } catch (error) {
+  //     console.error("Error getting tracks by artist:", error);
+  //     return [];
+  //   }
+  // }
 
-  static async getTracksByAlbum(albumName: string): Promise<Track[]> {
-    try {
-      const result = await CapacitorMediaStore.getMediasByType({
-        mediaType: MediaType.AUDIO,
-        albumName,
-        includeExternal: true,
-      });
+  // static async getTracksByAlbum(albumName: string): Promise<Track[]> {
+  //   try {
+  //     const result = await CapacitorMediaStore.getMediasByType({
+  //       mediaType: MediaType.AUDIO,
+  //       albumName,
+  //       includeExternal: true,
+  //     });
 
-      return result.media.map((file) => ({
-        name: file.title || "Unknown",
-        artist: file.artist || "Unknown Artist",
-        album: file.album || "Unknown Album",
-        url: file.uri || "",
-        path: file.uri || "",
-        mediaStoreUri: file.uri || "",
-        duration: this.formatDuration(Math.floor((file.duration || 0) / 1000)),
-        durationSeconds: Math.floor((file.duration || 0) / 1000),
-      }));
-    } catch (error) {
-      console.error("Error getting tracks by album:", error);
-      return [];
-    }
-  }
+  //     return result.media.map((file) => ({
+  //       name: file.title || "Unknown",
+  //       artist: file.artist || "Unknown Artist",
+  //       album: file.album || "Unknown Album",
+  //       url: file.uri || "",
+  //       path: file.uri || "",
+  //       mediaStoreUri: file.uri || "",
+  //       duration: this.formatDuration(Math.floor((file.duration || 0) / 1000)),
+  //       durationSeconds: file.duration,
+  //     }));
+  //   } catch (error) {
+  //     console.error("Error getting tracks by album:", error);
+  //     return [];
+  //   }
+  // }
 
   private static formatDuration(seconds: number): string {
     const mins = Math.floor(seconds / 60);
