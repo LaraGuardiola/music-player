@@ -32,13 +32,22 @@ export class CosmicMusicPlayer {
   private headerButtons!: NodeListOf<HTMLButtonElement>;
   private debugPanel: DebugPanel | null = null;
 
+  // Nuevas propiedades para las vistas
+  private currentView:
+    | "songs"
+    | "artists"
+    | "artist-detail"
+    | "albums"
+    | "album-detail" = "songs";
+  private selectedArtist: string | null = null;
+  private selectedAlbum: string | null = null;
+
   private readonly playIconUrl: string;
   private readonly stopIconUrl: string;
 
   constructor(debugPanel: DebugPanel) {
     this.debugPanel = debugPanel;
 
-    //having problems with images in apks, this way is working so I won't bother further
     try {
       this.playIconUrl = new URL("./assets/play.svg", import.meta.url).href;
       this.stopIconUrl = new URL("./assets/stop.svg", import.meta.url).href;
@@ -101,7 +110,6 @@ export class CosmicMusicPlayer {
     this.setupEventListeners();
     this.renderPlaylist();
 
-    // Catch launch intent
     const intentInfo = await App.getLaunchUrl();
 
     if (intentInfo?.url) {
@@ -117,9 +125,7 @@ export class CosmicMusicPlayer {
 
   private decodeFileNameFromUrl(url: string): string {
     const fileName = url.split("/").pop() ?? url;
-
     const decoded = decodeURIComponent(fileName);
-
     return decoded.replace(/\.[^/.]+$/, "");
   }
 
@@ -144,39 +150,13 @@ export class CosmicMusicPlayer {
     }
   }
 
-  private handleHeaderSongsBtn() {
-    this.debugPanel?.addLog("Songs button clicked");
-  }
-
-  private handleHeaderAlbumBtn() {
-    this.debugPanel?.addLog("Album button clicked");
-  }
-
-  private handleHeaderArtistBtn() {
-    this.debugPanel?.addLog("Artist button clicked");
-  }
-
-  private handleHeaderPlaylistsBtn() {
-    this.debugPanel?.addLog("Playlists button clicked");
-  }
-
   private setupEventListeners(): void {
     this.displayActiveOption();
 
-    // this.headerOptSongs.addEventListener("click", this.handleHeaderSongsBtn);
-    // this.headerOptAlbum.addEventListener("click", this.handleHeaderAlbumBtn);
-    // this.headerOptArtist.addEventListener("click", this.handleHeaderArtistBtn);
-    // this.headerOptPlaylists.addEventListener(
-    //   "click",
-    //   this.handleHeaderPlaylistsBtn
-    // );
-
-    //music player buttons
     this.playBtn.addEventListener("click", () => this.togglePlay());
     this.prevBtn.addEventListener("click", () => this.previousTrack());
     this.nextBtn.addEventListener("click", () => this.nextTrack());
 
-    //audio player
     this.audio.addEventListener("loadedmetadata", () => this.updateTrackInfo());
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
     this.audio.addEventListener("ended", () => this.nextTrack());
@@ -193,7 +173,6 @@ export class CosmicMusicPlayer {
       this.handleStickyActiveTrack()
     );
 
-    // Listener para archivos abiertos mientras la app está activa
     App.addListener("appUrlOpen", (data) => {
       this.debugPanel?.addLog(`🔄 New file opened: ${data.url}`);
       void this.loadFromUri(data.url);
@@ -237,7 +216,6 @@ export class CosmicMusicPlayer {
     }
 
     this.tracks.forEach((track, index) => {
-      // ✅ Cambiar debugPanel por this.debugPanel
       this.debugPanel?.addLog(`🎵 Track ${index + 1}: ${track.duration}`);
 
       const item = document.createElement("div");
@@ -257,6 +235,248 @@ export class CosmicMusicPlayer {
     });
 
     this.debugPanel?.addLog(`📋 Playlist: ${this.tracks.length} tracks`);
+  }
+
+  // ==================== ARTISTS VIEW ====================
+
+  private renderArtistsList(): void {
+    this.playlist.innerHTML = "";
+
+    if (this.tracks.length === 0) {
+      this.playlist.innerHTML = `
+        <div style="padding: 20px; text-align: center; color: #00ffff; font-size: 1.2em;">
+          <p>No artists found 🎤</p>
+        </div>
+      `;
+      return;
+    }
+
+    const artistsMap = new Map<string, Track[]>();
+
+    this.tracks.forEach((track) => {
+      const artist = track.artist || "Unknown Artist";
+      if (!artistsMap.has(artist)) {
+        artistsMap.set(artist, []);
+      }
+      artistsMap.get(artist)!.push(track);
+    });
+
+    const sortedArtists = Array.from(artistsMap.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    );
+
+    this.debugPanel?.addLog(`🎤 ${sortedArtists.length} artists found`);
+
+    sortedArtists.forEach(([artistName, tracks]) => {
+      const totalDuration = tracks.reduce(
+        (sum, track) => sum + track.durationSeconds,
+        0
+      );
+
+      const item = document.createElement("div");
+      item.className = "playlist-item artist-item";
+      item.innerHTML = `
+        <div class="song-info">
+          <div class="song-name">
+            <span style="font-size: 1.1em;">🎤 ${artistName}</span>
+          </div>
+          <div class="song-artist" style="color: #888;">
+            ${tracks.length} song${
+        tracks.length !== 1 ? "s" : ""
+      } • ${this.formatTime(totalDuration)}
+          </div>
+        </div>
+        <div class="song-duration" style="font-size: 1.5em;">›</div>
+      `;
+
+      item.addEventListener("click", () => this.showArtistDetail(artistName));
+      this.playlist.appendChild(item);
+    });
+  }
+
+  private showArtistDetail(artistName: string): void {
+    this.selectedArtist = artistName;
+    this.currentView = "artist-detail";
+    this.playlist.innerHTML = "";
+
+    const backBtn = document.createElement("div");
+    backBtn.className = "playlist-item";
+    backBtn.style.cssText =
+      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+    backBtn.innerHTML = `
+      <div class="song-info">
+        <div class="song-name">
+          <span style="font-size: 1.1em;">‹ Back to Artists</span>
+        </div>
+      </div>
+    `;
+    backBtn.addEventListener("click", () => this.renderArtistsList());
+    this.playlist.appendChild(backBtn);
+
+    const header = document.createElement("div");
+    header.style.cssText =
+      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+    header.innerHTML = `
+      <div style="font-size: 1.5em; margin-bottom: 10px;">🎤 ${artistName}</div>
+    `;
+    this.playlist.appendChild(header);
+
+    const artistTracks = this.tracks.filter(
+      (track) => (track.artist || "Unknown Artist") === artistName
+    );
+
+    artistTracks.forEach((track) => {
+      const originalIndex = this.tracks.indexOf(track);
+
+      const item = document.createElement("div");
+      item.className = "playlist-item";
+      item.dataset.index = originalIndex.toString();
+      item.innerHTML = `
+        <div class="song-info">
+          <div class="song-name">${track.displayName}</div>
+          <div class="song-artist">${track.album || "Unknown Album"}</div>
+        </div>
+        <div class="song-duration">${this.formatTime(
+          track.durationSeconds
+        )}</div>
+      `;
+
+      item.addEventListener("click", () => this.selectTrack(originalIndex));
+      this.playlist.appendChild(item);
+    });
+
+    this.debugPanel?.addLog(
+      `🎤 Showing ${artistTracks.length} songs by ${artistName}`
+    );
+  }
+
+  // ==================== ALBUMS VIEW ====================
+
+  private renderAlbumsList(): void {
+    this.playlist.innerHTML = "";
+
+    if (this.tracks.length === 0) {
+      this.playlist.innerHTML = `
+        <div style="padding: 20px; text-align: center; color: #00ffff; font-size: 1.2em;">
+          <p>No albums found 💿</p>
+        </div>
+      `;
+      return;
+    }
+
+    const albumsMap = new Map<string, Track[]>();
+
+    this.tracks.forEach((track) => {
+      const album = track.album || "Unknown Album";
+      if (!albumsMap.has(album)) {
+        albumsMap.set(album, []);
+      }
+      albumsMap.get(album)!.push(track);
+    });
+
+    const sortedAlbums = Array.from(albumsMap.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    );
+
+    this.debugPanel?.addLog(`💿 ${sortedAlbums.length} albums found`);
+
+    sortedAlbums.forEach(([albumName, tracks]) => {
+      const totalDuration = tracks.reduce(
+        (sum, track) => sum + track.durationSeconds,
+        0
+      );
+      const artistName = tracks[0].artist || "Unknown Artist";
+
+      const item = document.createElement("div");
+      item.className = "playlist-item album-item";
+      item.innerHTML = `
+        <div class="song-info">
+          <div class="song-name">
+            <span style="font-size: 1.1em;">💿 ${albumName}</span>
+          </div>
+          <div class="song-artist" style="color: #888;">
+            ${artistName} • ${tracks.length} song${
+        tracks.length !== 1 ? "s" : ""
+      } • ${this.formatTime(totalDuration)}
+          </div>
+        </div>
+        <div class="song-duration" style="font-size: 1.5em;">›</div>
+      `;
+
+      item.addEventListener("click", () => this.showAlbumDetail(albumName));
+      this.playlist.appendChild(item);
+    });
+  }
+
+  private showAlbumDetail(albumName: string): void {
+    this.selectedAlbum = albumName;
+    this.currentView = "album-detail";
+    this.playlist.innerHTML = "";
+
+    const backBtn = document.createElement("div");
+    backBtn.className = "playlist-item";
+    backBtn.style.cssText =
+      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+    backBtn.innerHTML = `
+      <div class="song-info">
+        <div class="song-name">
+          <span style="font-size: 1.1em;">‹ Back to Albums</span>
+        </div>
+      </div>
+    `;
+    backBtn.addEventListener("click", () => this.renderAlbumsList());
+    this.playlist.appendChild(backBtn);
+
+    const albumTracks = this.tracks.filter(
+      (track) => (track.album || "Unknown Album") === albumName
+    );
+
+    albumTracks.sort((a, b) => {
+      if (a.track && b.track) return a.track - b.track;
+      return a.displayName.localeCompare(b.displayName);
+    });
+
+    const artistName = albumTracks[0]?.artist || "Unknown Artist";
+
+    const header = document.createElement("div");
+    header.style.cssText =
+      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+    header.innerHTML = `
+      <div style="font-size: 1.5em; margin-bottom: 5px;">💿 ${albumName}</div>
+      <div style="font-size: 0.9em; color: #888; margin-top: 5px;">by ${artistName}</div>
+    `;
+    this.playlist.appendChild(header);
+
+    albumTracks.forEach((track) => {
+      const originalIndex = this.tracks.indexOf(track);
+
+      const item = document.createElement("div");
+      item.className = "playlist-item";
+      item.dataset.index = originalIndex.toString();
+      item.innerHTML = `
+        <div class="song-info">
+          <div class="song-name">
+            ${
+              track.track
+                ? `<span style="color: #888; margin-right: 10px;">${track.track}.</span>`
+                : ""
+            }
+            ${track.displayName}
+          </div>
+          <div class="song-artist">${track.artist || "Unknown Artist"}</div>
+        </div>
+        <div class="song-duration">${this.formatTime(
+          track.durationSeconds
+        )}</div>
+      `;
+
+      item.addEventListener("click", () => this.selectTrack(originalIndex));
+      this.playlist.appendChild(item);
+    });
+
+    this.debugPanel?.addLog(
+      `💿 Showing ${albumTracks.length} songs from ${albumName}`
+    );
   }
 
   private selectTrack(index: number): void {
@@ -472,7 +692,6 @@ export class CosmicMusicPlayer {
   private displayActiveOption() {
     this.headerButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        // Remover clase active de todos los botones
         this.headerButtons.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
 
@@ -481,15 +700,16 @@ export class CosmicMusicPlayer {
 
         switch (btnText) {
           case "Songs":
-            this.renderPlaylist(); // ✅ Ahora tiene el contexto correcto
+            this.currentView = "songs";
+            this.renderPlaylist();
             break;
           case "Albums":
-            this.playlist.innerHTML =
-              '<div style="padding: 20px; text-align: center; color: #00ffff;">Albums view - Coming soon</div>';
+            this.currentView = "albums";
+            this.renderAlbumsList();
             break;
           case "Artists":
-            this.playlist.innerHTML =
-              '<div style="padding: 20px; text-align: center; color: #00ffff;">Artists view - Coming soon</div>';
+            this.currentView = "artists";
+            this.renderArtistsList();
             break;
           case "Playlists":
             this.playlist.innerHTML =
@@ -524,7 +744,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   debugPanel.addLog("🎵 Ready");
 });
 
-// Background effects
 document.addEventListener("DOMContentLoaded", () => {
   createFloatingParticles();
 
