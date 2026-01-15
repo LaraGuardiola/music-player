@@ -556,25 +556,22 @@ export class CosmicMusicPlayer {
     // Load playlists from storage
     this.loadPlaylists();
 
-    // Create container for first two inline options
+// Create container for first two inline options
     const inlineOptionsContainer = document.createElement("div");
-    inlineOptionsContainer.style.cssText =
-      "display: flex; gap: 10px; margin-bottom: 20px;";
+    inlineOptionsContainer.style.cssText = "display: flex; gap: 10px;";
 
     // Create Last 90 Days playlist
     const recentTracks = this.getLast90DaysTracks();
     const recentItem = document.createElement("div");
     recentItem.className = "playlist-item";
-    recentItem.style.cssText = "flex: 1;";
+    recentItem.style.cssText = "flex: 1; margin: 0;";
     recentItem.innerHTML = `
       <div class="song-info">
         <div class="song-name">
           <span style="font-size: 1.1em;">🕐 Last 90 Days</span>
         </div>
         <div class="song-artist" style="color: #888;">
-          ${recentTracks.length} song${
-      recentTracks.length !== 1 ? "s" : ""
-    } • Recently added
+          ${recentTracks.length} song${recentTracks.length !== 1 ? "s" : ""} • Recently added
         </div>
       </div>
       <div class="song-duration" style="font-size: 1.5em;">›</div>
@@ -586,8 +583,7 @@ export class CosmicMusicPlayer {
     // Create New Playlist button
     const createPlaylistItem = document.createElement("div");
     createPlaylistItem.className = "playlist-item";
-    createPlaylistItem.style.cssText =
-      "flex: 1; background: rgba(0, 255, 0, 0.1); border-color: rgba(0, 255, 0, 0.3);";
+    createPlaylistItem.style.cssText = "flex: 1; background: rgba(0, 255, 0, 0.1); border-color: rgba(0, 255, 0, 0.3); margin: 0;";
     createPlaylistItem.innerHTML = `
       <div class="song-info">
         <div class="song-name">
@@ -600,9 +596,7 @@ export class CosmicMusicPlayer {
       <div class="song-duration" style="font-size: 1.5em;">+</div>
     `;
 
-    createPlaylistItem.addEventListener("click", () =>
-      this.showCreatePlaylistDialog()
-    );
+    createPlaylistItem.addEventListener("click", () => this.showCreatePlaylistDialog());
     inlineOptionsContainer.appendChild(createPlaylistItem);
 
     this.playlist.appendChild(inlineOptionsContainer);
@@ -833,29 +827,15 @@ export class CosmicMusicPlayer {
       box-shadow: 0 0 30px rgba(255, 0, 150, 0.3),
         inset 0 0 30px rgba(0, 255, 255, 0.1);
       animation: slideUp 0.3s ease;
+      position: relative;
     `;
 
     // Load playlists
     this.loadPlaylists();
 
     popupContent.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 255, 255, 0.3);">
+      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 255, 255, 0.3);">
         <h3 style="color: #00ffff; font-size: 1.3em; margin: 0;">Add to Playlist</h3>
-        <button id="close-popup-btn" style="
-          background: none;
-          border: none;
-          color: #ff0096;
-          font-size: 1.5em;
-          cursor: pointer;
-          padding: 5px;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s ease;
-        " onmouseover="this.style.background='rgba(255, 0, 150, 0.2)'" onmouseout="this.style.background='none'">×</button>
       </div>
       <div style="color: #ffffff; margin-bottom: 15px; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
         <div style="font-weight: bold; margin-bottom: 5px;">${
@@ -865,18 +845,20 @@ export class CosmicMusicPlayer {
           currentTrack.artist || "Unknown Artist"
         }</div>
       </div>
-      <div style="color: #00ffff; margin-bottom: 15px; font-weight: bold;">Choose a playlist:</div>
+      <div style="color: #00ffff; margin-bottom: 15px; font-weight: bold;">Select playlists:</div>
       <div id="playlist-options" style="display: flex; flex-direction: column; gap: 10px;">
         ${this.renderPlaylistOptions()}
       </div>
+
     `;
 
     this.playlistPopup.appendChild(popupContent);
     document.body.appendChild(this.playlistPopup);
+    
+    // Apply floating particles effect to popup
+    createFloatingParticles(popupContent);
 
-    // Add event listeners
-    const closeBtn = popupContent.querySelector("#close-popup-btn");
-    closeBtn?.addEventListener("click", () => this.closePlaylistPopup());
+
 
     // Close on background click
     this.playlistPopup.addEventListener("click", (e) => {
@@ -893,7 +875,7 @@ export class CosmicMusicPlayer {
         if (playlistId === "new") {
           this.createPlaylistAndAddTrack();
         } else if (playlistId) {
-          this.addTrackToPlaylist(playlistId);
+          this.toggleTrackInPlaylist(playlistId);
         }
       });
     });
@@ -915,11 +897,10 @@ export class CosmicMusicPlayer {
           transition: all 0.3s ease;
           color: #ffffff;
           display: flex;
-          justify-content: space-between;
+          justify-content: center;
           align-items: center;
         " onmouseover="this.style.background='rgba(0, 255, 0, 0.2)'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'">
-          <span>➕ New Playlist</span>
-          <span style="color: #00ff00;">+</span>
+          <span>New Playlist</span>
         </div>
       `;
     }
@@ -934,12 +915,11 @@ export class CosmicMusicPlayer {
         transition: all 0.3s ease;
         color: #ffffff;
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
         margin-bottom: 10px;
       " onmouseover="this.style.background='rgba(0, 255, 0, 0.2)'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'">
-        <span>➕ Create New Playlist</span>
-        <span style="color: #00ff00;">+</span>
+        <span>New Playlist</span>
       </div>
     `;
 
@@ -953,7 +933,6 @@ export class CosmicMusicPlayer {
 
       options += `
         <div class="playlist-option" data-playlist-id="${playlist.id}" style="
-          ${optionStyle}
           border: 1px solid;
           border-radius: 10px;
           padding: 15px;
@@ -963,16 +942,13 @@ export class CosmicMusicPlayer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-        " onmouseover="this.style.background='${
-          isInPlaylist ? "rgba(255, 0, 150, 0.3)" : "rgba(0, 255, 255, 0.1)"
-        }'" onmouseout="this.style.background='${
-        isInPlaylist ? "rgba(255, 0, 150, 0.2)" : "rgba(255, 255, 255, 0.05)"
-      }'">
-          <span>📋 ${playlist.name}</span>
+          ${optionStyle}
+        " onmouseover="this.style.background='rgba(0, 255, 255, 0.1)'" onmouseout="this.style.background='${optionStyle}'">
+          <span>${playlist.name}</span>
           <span style="color: ${
             isInPlaylist ? "#ff0096" : "#00ffff"
           }; font-size: 0.9em;">
-            ${isInPlaylist ? "✓ Added" : `${playlist.trackIds.length} tracks`}
+            ${isInPlaylist ? "✓ Click to remove" : `${playlist.trackIds.length} tracks`}
           </span>
         </div>
       `;
@@ -995,38 +971,69 @@ export class CosmicMusicPlayer {
 
     if (playlistName && playlistName.trim()) {
       const newPlaylist = this.createPlaylist(playlistName.trim());
-      this.addTrackToPlaylist(newPlaylist.id);
+      this.toggleTrackInPlaylist(newPlaylist.id);
     } else {
       this.debugPanel?.addLog("⚠️ Playlist creation cancelled or invalid name");
     }
   }
 
-  private addTrackToPlaylist(playlistId: string): void {
+  private toggleTrackInPlaylist(playlistId: string): void {
     if (!this.currentTrackForPlaylist) return;
 
     const playlist = this.playlists.find((p) => p.id === playlistId);
     if (!playlist) return;
 
-    if (playlist.trackIds.includes(this.currentTrackForPlaylist.id)) {
+    const trackId = this.currentTrackForPlaylist.id;
+    const isAlreadyInPlaylist = playlist.trackIds.includes(trackId);
+
+    if (isAlreadyInPlaylist) {
+      // Remove track from playlist
+      playlist.trackIds = playlist.trackIds.filter(id => id !== trackId);
       this.debugPanel?.addLog(
-        `⚠️ Track already in playlist "${playlist.name}"`
+        `🗑️ Removed "${this.currentTrackForPlaylist.displayName}" from "${playlist.name}"`
       );
-      this.closePlaylistPopup();
-      return;
+    } else {
+      // Add track to playlist
+      playlist.trackIds.push(trackId);
+      this.debugPanel?.addLog(
+        `✅ Added "${this.currentTrackForPlaylist.displayName}" to "${playlist.name}"`
+      );
     }
 
-    playlist.trackIds.push(this.currentTrackForPlaylist.id);
     this.savePlaylists();
-    this.debugPanel?.addLog(
-      `✅ Added "${this.currentTrackForPlaylist.displayName}" to "${playlist.name}"`
-    );
-    this.closePlaylistPopup();
+    
+    // Refresh the popup options to show updated state
+    this.refreshPlaylistPopup();
 
     // Refresh playlists view if currently visible
     if (this.currentView === "playlists") {
       this.renderPlaylistsList();
     }
   }
+
+  private refreshPlaylistPopup(): void {
+    if (!this.playlistPopup || !this.currentTrackForPlaylist) return;
+
+    const playlistOptionsContainer = this.playlistPopup.querySelector("#playlist-options");
+    if (playlistOptionsContainer) {
+      playlistOptionsContainer.innerHTML = this.renderPlaylistOptions();
+      
+      // Re-add click listeners to the new options
+      const playlistOptions = playlistOptionsContainer.querySelectorAll(".playlist-option");
+      playlistOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+          const playlistId = (option as HTMLElement).dataset.playlistId;
+          if (playlistId === "new") {
+            this.createPlaylistAndAddTrack();
+          } else if (playlistId) {
+            this.toggleTrackInPlaylist(playlistId);
+          }
+        });
+      });
+    }
+  }
+
+
 
   private selectTrack(index: number): void {
     this.currentTrackIndex = index;
