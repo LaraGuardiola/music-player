@@ -207,10 +207,45 @@ body::before {
   color: #cccccc;
 }
 
+.controls-container {
+  position: relative;
+}
+
 .controls {
   display: flex;
   justify-content: center;
   gap: 20px;
+}
+
+.add-to-playlist-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  background: linear-gradient(
+    45deg,
+    rgba(0, 255, 255, 0.1),
+    rgba(0, 255, 255, 0.2)
+  );
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-to-playlist-btn:hover {
+  background: linear-gradient(
+    45deg,
+    rgba(0, 255, 255, 0.2),
+    rgba(0, 255, 255, 0.3)
+  );
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
 }
 
 .control-btn {
@@ -275,6 +310,8 @@ body::before {
   height: 80px;
   font-size: 2em;
 }
+
+
 
 .playlist-section {
   background: linear-gradient(
@@ -533,4 +570,35 @@ body::before {
   100% {
     transform: translateX(calc(-1 * var(--scroll-distance)));
   }
+}
+
+/* Playlist popup animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Hide scrollbar for popup */
+#playlist-popup::-webkit-scrollbar {
+  display: none;
+}
+
+#playlist-popup {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

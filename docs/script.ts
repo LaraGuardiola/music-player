@@ -3,7 +3,7 @@ import { DebugPanel } from "./debugPanel";
 import { CapacitorMediaStore } from "@odion-cloud/capacitor-mediastore";
 import { App } from "@capacitor/app";
 import { createFloatingParticles } from "./background";
-import { Track } from "./types";
+import { Track, Playlist } from "./types";
 
 let trackList: Track[] = [];
 
@@ -18,6 +18,9 @@ export class CosmicMusicPlayer {
   private playStopIcon: HTMLImageElement;
   private prevBtn: HTMLElement;
   private nextBtn: HTMLElement;
+  private addToPlaylistBtn: HTMLElement;
+  private playlistPopup: HTMLElement | null = null;
+  private currentTrackForPlaylist: Track | null = null;
   private progressFill: HTMLElement;
   private currentTimeDisplay: HTMLElement;
   private totalTimeDisplay: HTMLElement;
@@ -38,9 +41,13 @@ export class CosmicMusicPlayer {
     | "artists"
     | "artist-detail"
     | "albums"
-    | "album-detail" = "songs";
+    | "album-detail"
+    | "playlists"
+    | "playlist-detail" = "songs";
   private selectedArtist: string | null = null;
   private selectedAlbum: string | null = null;
+  private selectedPlaylist: Playlist | null = null;
+  private playlists: Playlist[] = [];
 
   private readonly playIconUrl: string;
   private readonly stopIconUrl: string;
@@ -66,6 +73,9 @@ export class CosmicMusicPlayer {
     ) as HTMLImageElement;
     this.prevBtn = document.getElementById("prev-btn") as HTMLElement;
     this.nextBtn = document.getElementById("next-btn") as HTMLElement;
+    this.addToPlaylistBtn = document.getElementById(
+      "add-to-playlist-btn"
+    ) as HTMLElement;
     this.progressFill = document.getElementById("progress-fill") as HTMLElement;
     this.currentTimeDisplay = document.getElementById(
       "current-time"
@@ -156,6 +166,9 @@ export class CosmicMusicPlayer {
     this.playBtn.addEventListener("click", () => this.togglePlay());
     this.prevBtn.addEventListener("click", () => this.previousTrack());
     this.nextBtn.addEventListener("click", () => this.nextTrack());
+    this.addToPlaylistBtn.addEventListener("click", () =>
+      this.showPlaylistPopup()
+    );
 
     this.audio.addEventListener("loadedmetadata", () => this.updateTrackInfo());
     this.audio.addEventListener("timeupdate", () => this.updateProgress());
@@ -479,6 +492,542 @@ export class CosmicMusicPlayer {
     );
   }
 
+  // ==================== PLAYLISTS VIEW ====================
+
+  private loadPlaylists(): void {
+    try {
+      const savedPlaylists = localStorage.getItem("cosmic_music_playlists");
+      if (savedPlaylists) {
+        this.playlists = JSON.parse(savedPlaylists);
+        this.debugPanel?.addLog(
+          `📋 Loaded ${this.playlists.length} playlists from storage`
+        );
+      } else {
+        this.playlists = [];
+        this.debugPanel?.addLog(`📋 No playlists found in storage`);
+      }
+    } catch (error) {
+      this.debugPanel?.addLog(`❌ Error loading playlists: ${error}`);
+      this.playlists = [];
+    }
+  }
+
+  private savePlaylists(): void {
+    try {
+      localStorage.setItem(
+        "cosmic_music_playlists",
+        JSON.stringify(this.playlists)
+      );
+      this.debugPanel?.addLog(
+        `💾 Saved ${this.playlists.length} playlists to storage`
+      );
+    } catch (error) {
+      this.debugPanel?.addLog(`❌ Error saving playlists: ${error}`);
+    }
+  }
+
+  private createPlaylist(name: string): Playlist {
+    const playlist: Playlist = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      trackIds: [],
+      createdAt: new Date(),
+      isSystem: false,
+    };
+
+    this.playlists.push(playlist);
+    this.savePlaylists();
+    this.debugPanel?.addLog(`✅ Created playlist: ${name}`);
+
+    return playlist;
+  }
+
+  private getLast90DaysTracks(): Track[] {
+    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000; // 90 days ago in milliseconds
+
+    return this.tracks.filter((track) => {
+      return track.dateAdded >= ninetyDaysAgo;
+    });
+  }
+
+  private renderPlaylistsList(): void {
+    this.playlist.innerHTML = "";
+
+    // Load playlists from storage
+    this.loadPlaylists();
+
+    // Create container for first two inline options
+    const inlineOptionsContainer = document.createElement("div");
+    inlineOptionsContainer.style.cssText =
+      "display: flex; gap: 10px; margin-bottom: 20px;";
+
+    // Create Last 90 Days playlist
+    const recentTracks = this.getLast90DaysTracks();
+    const recentItem = document.createElement("div");
+    recentItem.className = "playlist-item";
+    recentItem.style.cssText = "flex: 1;";
+    recentItem.innerHTML = `
+      <div class="song-info">
+        <div class="song-name">
+          <span style="font-size: 1.1em;">🕐 Last 90 Days</span>
+        </div>
+        <div class="song-artist" style="color: #888;">
+          ${recentTracks.length} song${
+      recentTracks.length !== 1 ? "s" : ""
+    } • Recently added
+        </div>
+      </div>
+      <div class="song-duration" style="font-size: 1.5em;">›</div>
+    `;
+
+    recentItem.addEventListener("click", () => this.showLast90DaysDetail());
+    inlineOptionsContainer.appendChild(recentItem);
+
+    // Create New Playlist button
+    const createPlaylistItem = document.createElement("div");
+    createPlaylistItem.className = "playlist-item";
+    createPlaylistItem.style.cssText =
+      "flex: 1; background: rgba(0, 255, 0, 0.1); border-color: rgba(0, 255, 0, 0.3);";
+    createPlaylistItem.innerHTML = `
+      <div class="song-info">
+        <div class="song-name">
+          <span style="font-size: 1.1em;">➕ New Playlist</span>
+        </div>
+        <div class="song-artist" style="color: #888;">
+          Add a custom playlist
+        </div>
+      </div>
+      <div class="song-duration" style="font-size: 1.5em;">+</div>
+    `;
+
+    createPlaylistItem.addEventListener("click", () =>
+      this.showCreatePlaylistDialog()
+    );
+    inlineOptionsContainer.appendChild(createPlaylistItem);
+
+    this.playlist.appendChild(inlineOptionsContainer);
+
+    // Display saved playlists
+    if (this.playlists.length === 0) {
+      const noPlaylistsItem = document.createElement("div");
+      noPlaylistsItem.className = "playlist-item";
+      noPlaylistsItem.innerHTML = `
+        <div class="song-info">
+          <div class="song-name" style="color: #888; text-align: center; width: 100%;">
+            No custom playlists yet
+          </div>
+        </div>
+      `;
+      this.playlist.appendChild(noPlaylistsItem);
+    } else {
+      this.playlists.forEach((playlist) => {
+        const trackCount = playlist.trackIds.length;
+        const item = document.createElement("div");
+        item.className = "playlist-item";
+        item.innerHTML = `
+          <div class="song-info">
+            <div class="song-name">
+              <span style="font-size: 1.1em;">📋 ${playlist.name}</span>
+            </div>
+            <div class="song-artist" style="color: #888;">
+              ${trackCount} song${
+          trackCount !== 1 ? "s" : ""
+        } • Created ${new Date(playlist.createdAt).toLocaleDateString()}
+            </div>
+          </div>
+          <div class="song-duration" style="font-size: 1.5em;">›</div>
+        `;
+
+        item.addEventListener("click", () => this.showPlaylistDetail(playlist));
+        this.playlist.appendChild(item);
+      });
+    }
+
+    this.debugPanel?.addLog(
+      `📋 Playlists view: ${recentTracks.length} recent tracks, ${this.playlists.length} custom playlists`
+    );
+  }
+
+  private showLast90DaysDetail(): void {
+    this.currentView = "playlist-detail";
+    this.playlist.innerHTML = "";
+
+    const backBtn = document.createElement("div");
+    backBtn.className = "playlist-item";
+    backBtn.style.cssText =
+      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+    backBtn.innerHTML = `
+      <div class="song-info">
+        <div class="song-name">
+          <span style="font-size: 1.1em;">‹ Back to Playlists</span>
+        </div>
+      </div>
+    `;
+    backBtn.addEventListener("click", () => this.renderPlaylistsList());
+    this.playlist.appendChild(backBtn);
+
+    const header = document.createElement("div");
+    header.style.cssText =
+      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+    header.innerHTML = `
+      <div style="font-size: 1.5em; margin-bottom: 10px;">🕐 Last 90 Days</div>
+      <div style="font-size: 0.9em; color: #888; margin-top: 5px;">Recently added tracks</div>
+    `;
+    this.playlist.appendChild(header);
+
+    const recentTracks = this.getLast90DaysTracks();
+    recentTracks.forEach((track) => {
+      const originalIndex = this.tracks.indexOf(track);
+
+      const item = document.createElement("div");
+      item.className = "playlist-item";
+      item.dataset.index = originalIndex.toString();
+      item.innerHTML = `
+        <div class="song-info">
+          <div class="song-name">${track.displayName}</div>
+          <div class="song-artist">${track.artist || "Unknown Artist"}</div>
+        </div>
+        <div class="song-duration">${this.formatTime(
+          track.durationSeconds
+        )}</div>
+      `;
+
+      item.addEventListener("click", () => this.selectTrack(originalIndex));
+      this.playlist.appendChild(item);
+    });
+
+    this.debugPanel?.addLog(`🕐 Showing ${recentTracks.length} recent tracks`);
+  }
+
+  private showCreatePlaylistDialog(): void {
+    const playlistName = prompt("Enter playlist name:");
+
+    if (playlistName && playlistName.trim()) {
+      const newPlaylist = this.createPlaylist(playlistName.trim());
+      this.renderPlaylistsList(); // Refresh the list
+      this.debugPanel?.addLog(`✅ Playlist "${newPlaylist.name}" created`);
+    } else {
+      this.debugPanel?.addLog(`⚠️ Playlist creation cancelled or invalid name`);
+    }
+  }
+
+  private showPlaylistDetail(playlist: Playlist): void {
+    this.selectedPlaylist = playlist;
+    this.currentView = "playlist-detail";
+    this.playlist.innerHTML = "";
+
+    const backBtn = document.createElement("div");
+    backBtn.className = "playlist-item";
+    backBtn.style.cssText =
+      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+    backBtn.innerHTML = `
+      <div class="song-info">
+        <div class="song-name">
+          <span style="font-size: 1.1em;">‹ Back to Playlists</span>
+        </div>
+      </div>
+    `;
+    backBtn.addEventListener("click", () => this.renderPlaylistsList());
+    this.playlist.appendChild(backBtn);
+
+    const header = document.createElement("div");
+    header.style.cssText =
+      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+    header.innerHTML = `
+      <div style="font-size: 1.5em; margin-bottom: 10px;">📋 ${
+        playlist.name
+      }</div>
+      <div style="font-size: 0.9em; color: #888; margin-top: 5px;">${
+        playlist.trackIds.length
+      } song${playlist.trackIds.length !== 1 ? "s" : ""}</div>
+    `;
+    this.playlist.appendChild(header);
+
+    if (playlist.trackIds.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "playlist-item";
+      emptyMessage.innerHTML = `
+        <div class="song-info">
+          <div class="song-name" style="color: #888; text-align: center; width: 100%;">
+            This playlist is empty
+          </div>
+          <div class="song-artist" style="color: #666; text-align: center; width: 100%;">
+            Add tracks from the Songs view
+          </div>
+        </div>
+      `;
+      this.playlist.appendChild(emptyMessage);
+    } else {
+      playlist.trackIds.forEach((trackId) => {
+        const track = this.tracks.find((t) => t.id === trackId);
+        if (track) {
+          const originalIndex = this.tracks.indexOf(track);
+
+          const item = document.createElement("div");
+          item.className = "playlist-item";
+          item.dataset.index = originalIndex.toString();
+          item.innerHTML = `
+            <div class="song-info">
+              <div class="song-name">${track.displayName}</div>
+              <div class="song-artist">${track.artist || "Unknown Artist"}</div>
+            </div>
+            <div class="song-duration">${this.formatTime(
+              track.durationSeconds
+            )}</div>
+          `;
+
+          item.addEventListener("click", () => this.selectTrack(originalIndex));
+          this.playlist.appendChild(item);
+        }
+      });
+    }
+
+    this.debugPanel?.addLog(
+      `📋 Showing playlist "${playlist.name}" with ${playlist.trackIds.length} tracks`
+    );
+  }
+
+  // ==================== PLAYLIST POPUP ====================
+
+  private showPlaylistPopup(): void {
+    if (this.tracks.length === 0) {
+      this.debugPanel?.addLog("⚠️ No tracks available to add to playlist");
+      return;
+    }
+
+    // Get current track or use first track
+    const currentTrack =
+      this.currentTrackIndex >= 0
+        ? this.tracks[this.currentTrackIndex]
+        : this.tracks[0];
+    this.currentTrackForPlaylist = currentTrack;
+
+    // Create popup overlay
+    this.playlistPopup = document.createElement("div");
+    this.playlistPopup.id = "playlist-popup";
+    this.playlistPopup.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    `;
+
+    // Create popup content
+    const popupContent = document.createElement("div");
+    popupContent.style.cssText = `
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border: 2px solid rgba(0, 255, 255, 0.3);
+      border-radius: 20px;
+      padding: 20px;
+      max-width: 400px;
+      width: 90%;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: 0 0 30px rgba(255, 0, 150, 0.3),
+        inset 0 0 30px rgba(0, 255, 255, 0.1);
+      animation: slideUp 0.3s ease;
+    `;
+
+    // Load playlists
+    this.loadPlaylists();
+
+    popupContent.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(0, 255, 255, 0.3);">
+        <h3 style="color: #00ffff; font-size: 1.3em; margin: 0;">Add to Playlist</h3>
+        <button id="close-popup-btn" style="
+          background: none;
+          border: none;
+          color: #ff0096;
+          font-size: 1.5em;
+          cursor: pointer;
+          padding: 5px;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+        " onmouseover="this.style.background='rgba(255, 0, 150, 0.2)'" onmouseout="this.style.background='none'">×</button>
+      </div>
+      <div style="color: #ffffff; margin-bottom: 15px; padding: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
+        <div style="font-weight: bold; margin-bottom: 5px;">${
+          currentTrack.displayName
+        }</div>
+        <div style="font-size: 0.9em; color: #cccccc;">${
+          currentTrack.artist || "Unknown Artist"
+        }</div>
+      </div>
+      <div style="color: #00ffff; margin-bottom: 15px; font-weight: bold;">Choose a playlist:</div>
+      <div id="playlist-options" style="display: flex; flex-direction: column; gap: 10px;">
+        ${this.renderPlaylistOptions()}
+      </div>
+    `;
+
+    this.playlistPopup.appendChild(popupContent);
+    document.body.appendChild(this.playlistPopup);
+
+    // Add event listeners
+    const closeBtn = popupContent.querySelector("#close-popup-btn");
+    closeBtn?.addEventListener("click", () => this.closePlaylistPopup());
+
+    // Close on background click
+    this.playlistPopup.addEventListener("click", (e) => {
+      if (e.target === this.playlistPopup) {
+        this.closePlaylistPopup();
+      }
+    });
+
+    // Add click listeners to playlist options
+    const playlistOptions = popupContent.querySelectorAll(".playlist-option");
+    playlistOptions.forEach((option) => {
+      option.addEventListener("click", () => {
+        const playlistId = (option as HTMLElement).dataset.playlistId;
+        if (playlistId === "new") {
+          this.createPlaylistAndAddTrack();
+        } else if (playlistId) {
+          this.addTrackToPlaylist(playlistId);
+        }
+      });
+    });
+
+    this.debugPanel?.addLog(
+      `📋 Opening playlist popup for: ${currentTrack.displayName}`
+    );
+  }
+
+  private renderPlaylistOptions(): string {
+    if (this.playlists.length === 0) {
+      return `
+        <div class="playlist-option" data-playlist-id="new" style="
+          background: rgba(0, 255, 0, 0.1);
+          border: 1px solid rgba(0, 255, 0, 0.3);
+          border-radius: 10px;
+          padding: 15px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          color: #ffffff;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        " onmouseover="this.style.background='rgba(0, 255, 0, 0.2)'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'">
+          <span>➕ New Playlist</span>
+          <span style="color: #00ff00;">+</span>
+        </div>
+      `;
+    }
+
+    let options = `
+      <div class="playlist-option" data-playlist-id="new" style="
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid rgba(0, 255, 0, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: #ffffff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      " onmouseover="this.style.background='rgba(0, 255, 0, 0.2)'" onmouseout="this.style.background='rgba(0, 255, 0, 0.1)'">
+        <span>➕ Create New Playlist</span>
+        <span style="color: #00ff00;">+</span>
+      </div>
+    `;
+
+    this.playlists.forEach((playlist) => {
+      const isInPlaylist = playlist.trackIds.includes(
+        this.currentTrackForPlaylist?.id || ""
+      );
+      const optionStyle = isInPlaylist
+        ? "background: rgba(255, 0, 150, 0.2); border-color: rgba(255, 0, 150, 0.5);"
+        : "background: rgba(255, 255, 255, 0.05); border-color: rgba(0, 255, 255, 0.2);";
+
+      options += `
+        <div class="playlist-option" data-playlist-id="${playlist.id}" style="
+          ${optionStyle}
+          border: 1px solid;
+          border-radius: 10px;
+          padding: 15px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          color: #ffffff;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        " onmouseover="this.style.background='${
+          isInPlaylist ? "rgba(255, 0, 150, 0.3)" : "rgba(0, 255, 255, 0.1)"
+        }'" onmouseout="this.style.background='${
+        isInPlaylist ? "rgba(255, 0, 150, 0.2)" : "rgba(255, 255, 255, 0.05)"
+      }'">
+          <span>📋 ${playlist.name}</span>
+          <span style="color: ${
+            isInPlaylist ? "#ff0096" : "#00ffff"
+          }; font-size: 0.9em;">
+            ${isInPlaylist ? "✓ Added" : `${playlist.trackIds.length} tracks`}
+          </span>
+        </div>
+      `;
+    });
+
+    return options;
+  }
+
+  private closePlaylistPopup(): void {
+    if (this.playlistPopup) {
+      this.playlistPopup.remove();
+      this.playlistPopup = null;
+      this.currentTrackForPlaylist = null;
+      this.debugPanel?.addLog("📋 Playlist popup closed");
+    }
+  }
+
+  private createPlaylistAndAddTrack(): void {
+    const playlistName = prompt("Enter playlist name:");
+
+    if (playlistName && playlistName.trim()) {
+      const newPlaylist = this.createPlaylist(playlistName.trim());
+      this.addTrackToPlaylist(newPlaylist.id);
+    } else {
+      this.debugPanel?.addLog("⚠️ Playlist creation cancelled or invalid name");
+    }
+  }
+
+  private addTrackToPlaylist(playlistId: string): void {
+    if (!this.currentTrackForPlaylist) return;
+
+    const playlist = this.playlists.find((p) => p.id === playlistId);
+    if (!playlist) return;
+
+    if (playlist.trackIds.includes(this.currentTrackForPlaylist.id)) {
+      this.debugPanel?.addLog(
+        `⚠️ Track already in playlist "${playlist.name}"`
+      );
+      this.closePlaylistPopup();
+      return;
+    }
+
+    playlist.trackIds.push(this.currentTrackForPlaylist.id);
+    this.savePlaylists();
+    this.debugPanel?.addLog(
+      `✅ Added "${this.currentTrackForPlaylist.displayName}" to "${playlist.name}"`
+    );
+    this.closePlaylistPopup();
+
+    // Refresh playlists view if currently visible
+    if (this.currentView === "playlists") {
+      this.renderPlaylistsList();
+    }
+  }
+
   private selectTrack(index: number): void {
     this.currentTrackIndex = index;
     const wasPlaying = this.isPlaying;
@@ -712,8 +1261,8 @@ export class CosmicMusicPlayer {
             this.renderArtistsList();
             break;
           case "Playlists":
-            this.playlist.innerHTML =
-              '<div style="padding: 20px; text-align: center; color: #00ffff;">Playlists view - Coming soon</div>';
+            this.currentView = "playlists";
+            this.renderPlaylistsList();
             break;
         }
       });
