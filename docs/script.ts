@@ -196,12 +196,29 @@ export class CosmicMusicPlayer {
   }
 
   private handleStickyActiveTrack(): void {
-    const activeItem = this.playlist.querySelector(
+    // Find the active track in any container
+    let activeItem = document.querySelector(
       ".playlist-item.active"
     ) as HTMLElement;
+    
     if (!activeItem) return;
 
-    const containerRect = this.playlistSection.getBoundingClientRect();
+    // Determine the scroll container based on current view
+    let scrollContainer: HTMLElement;
+    
+    if (this.currentView === "artist-detail" || 
+        this.currentView === "album-detail" || 
+        this.currentView === "playlist-detail") {
+      // For detail views, use the tracks wrapper
+      scrollContainer = this.playlist.querySelector(".tracks-wrapper") as HTMLElement;
+    } else {
+      // For main views, use the playlist section
+      scrollContainer = this.playlistSection;
+    }
+
+    if (!scrollContainer) return;
+
+    const containerRect = scrollContainer.getBoundingClientRect();
     const activeRect = activeItem.getBoundingClientRect();
     const STICKY_THRESHOLD = 30;
 
@@ -349,6 +366,11 @@ export class CosmicMusicPlayer {
     tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
+    // Add scroll event listener for sticky active track
+    tracksWrapper.addEventListener("scroll", () =>
+      this.handleStickyActiveTrack()
+    );
+
     const artistTracks = this.tracks.filter(
       (track) => (track.artist || "Unknown Artist") === artistName
     );
@@ -490,6 +512,11 @@ export class CosmicMusicPlayer {
 
     tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
+
+    // Add scroll event listener for sticky active track
+    tracksWrapper.addEventListener("scroll", () =>
+      this.handleStickyActiveTrack()
+    );
 
     albumTracks.forEach((track) => {
       const originalIndex = this.tracks.indexOf(track);
@@ -721,6 +748,11 @@ export class CosmicMusicPlayer {
     tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
+    // Add scroll event listener for sticky active track
+    tracksWrapper.addEventListener("scroll", () =>
+      this.handleStickyActiveTrack()
+    );
+
     const recentTracks = this.getLast90DaysTracks();
     recentTracks.forEach((track) => {
       const originalIndex = this.tracks.indexOf(track);
@@ -804,6 +836,11 @@ export class CosmicMusicPlayer {
 
     tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
+
+    // Add scroll event listener for sticky active track
+    tracksWrapper.addEventListener("scroll", () =>
+      this.handleStickyActiveTrack()
+    );
 
     if (playlist.trackIds.length === 0) {
       const emptyMessage = document.createElement("div");
