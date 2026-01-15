@@ -4,6 +4,7 @@ import { CapacitorMediaStore } from "@odion-cloud/capacitor-mediastore";
 import { App } from "@capacitor/app";
 import { createFloatingParticles } from "./background";
 import { Track, Playlist } from "./types";
+import { mockTracks } from "./tracks";
 
 let trackList: Track[] = [];
 
@@ -1291,7 +1292,10 @@ document.addEventListener("load", async () => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-  trackList = await MediaStoreService.waitForTracks();
+  // Try to load real tracks, fallback to mock tracks if empty
+  const realTracks = await MediaStoreService.waitForTracks();
+  trackList = realTracks.length > 0 ? realTracks : mockTracks;
+  
   const player = new CosmicMusicPlayer(debugPanel);
   await player.init();
   debugPanel.addLog("🎵 Ready");
