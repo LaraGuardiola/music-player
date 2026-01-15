@@ -316,7 +316,7 @@ export class CosmicMusicPlayer {
     const backBtn = document.createElement("div");
     backBtn.className = "playlist-item";
     backBtn.style.cssText =
-      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+      "background: #1a1a2e; cursor: pointer; position: sticky; top: 0; z-index: 10; margin-bottom: 0;";
     backBtn.innerHTML = `
       <div class="song-info">
         <div class="song-name">
@@ -329,11 +329,25 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); position: sticky; top: 60px; z-index: 5; margin-bottom: 0;";
     header.innerHTML = `
       <span style="font-size: 0.8em; font-weight: bold;">🎤 ${artistName}</span>
     `;
     this.playlist.appendChild(header);
+
+    // Create scrollable tracks wrapper
+    const tracksWrapper = document.createElement("div");
+    // Get playlist section height and calculate wrapper max height
+    const playlistSection = document.querySelector(
+      ".playlist-section"
+    ) as HTMLElement;
+    const playlistSectionHeight = playlistSection
+      ? playlistSection.offsetHeight
+      : window.innerHeight;
+    const wrapperMaxHeight = playlistSectionHeight - 112;
+
+    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.className = "tracks-wrapper";
 
     const artistTracks = this.tracks.filter(
       (track) => (track.artist || "Unknown Artist") === artistName
@@ -356,8 +370,11 @@ export class CosmicMusicPlayer {
       `;
 
       item.addEventListener("click", () => this.selectTrack(originalIndex));
-      this.playlist.appendChild(item);
+      item.style.marginBottom = "0.5em";
+      tracksWrapper.appendChild(item);
     });
+
+    this.playlist.appendChild(tracksWrapper);
 
     this.debugPanel?.addLog(
       `🎤 Showing ${artistTracks.length} songs by ${artistName}`
@@ -430,7 +447,7 @@ export class CosmicMusicPlayer {
     const backBtn = document.createElement("div");
     backBtn.className = "playlist-item";
     backBtn.style.cssText =
-      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+      "background: #1a1a2e; cursor: pointer; position: sticky; top: 0; z-index: 10; margin-bottom: 0;";
     backBtn.innerHTML = `
       <div class="song-info">
         <div class="song-name">
@@ -454,11 +471,25 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); position: sticky; top: 60px; z-index: 5; margin-bottom: 0;";
     header.innerHTML = `
       <span style="font-size: 0.8em; font-weight: bold;">💿 ${albumName}</span> • <span style="font-size: 0.6em; color: #888;">by ${artistName}</span>
     `;
     this.playlist.appendChild(header);
+
+    // Create scrollable tracks wrapper
+    const tracksWrapper = document.createElement("div");
+    // Get playlist section height and calculate wrapper max height
+    const playlistSection = document.querySelector(
+      ".playlist-section"
+    ) as HTMLElement;
+    const playlistSectionHeight = playlistSection
+      ? playlistSection.offsetHeight
+      : window.innerHeight;
+    const wrapperMaxHeight = playlistSectionHeight - 112;
+
+    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.className = "tracks-wrapper";
 
     albumTracks.forEach((track) => {
       const originalIndex = this.tracks.indexOf(track);
@@ -484,8 +515,11 @@ export class CosmicMusicPlayer {
       `;
 
       item.addEventListener("click", () => this.selectTrack(originalIndex));
-      this.playlist.appendChild(item);
+      item.style.marginBottom = "0.5em";
+      tracksWrapper.appendChild(item);
     });
+
+    this.playlist.appendChild(tracksWrapper);
 
     this.debugPanel?.addLog(
       `💿 Showing ${albumTracks.length} songs from ${albumName}`
@@ -654,7 +688,7 @@ export class CosmicMusicPlayer {
     const backBtn = document.createElement("div");
     backBtn.className = "playlist-item";
     backBtn.style.cssText =
-      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+      "background: #1a1a2e; cursor: pointer; position: sticky; top: 0; z-index: 10; margin-bottom: 0;";
     backBtn.innerHTML = `
       <div class="song-info">
         <div class="song-name">
@@ -667,11 +701,25 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); position: sticky; top: 60px; z-index: 5; margin-bottom: 0;";
     header.innerHTML = `
       <span style="font-size: 0.8em; font-weight: bold;">🕐 Last 90 Days</span> • <span style="font-size: 0.6em; color: #888;">Recently added</span>
     `;
     this.playlist.appendChild(header);
+
+    // Create scrollable tracks wrapper
+    const tracksWrapper = document.createElement("div");
+    // Get playlist section height and calculate wrapper max height
+    const playlistSection = document.querySelector(
+      ".playlist-section"
+    ) as HTMLElement;
+    const playlistSectionHeight = playlistSection
+      ? playlistSection.offsetHeight
+      : window.innerHeight;
+    const wrapperMaxHeight = playlistSectionHeight - 132;
+
+    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.className = "tracks-wrapper";
 
     const recentTracks = this.getLast90DaysTracks();
     recentTracks.forEach((track) => {
@@ -691,8 +739,11 @@ export class CosmicMusicPlayer {
       `;
 
       item.addEventListener("click", () => this.selectTrack(originalIndex));
-      this.playlist.appendChild(item);
+      item.style.marginBottom = "0.5em";
+      tracksWrapper.appendChild(item);
     });
+
+    this.playlist.appendChild(tracksWrapper);
 
     this.debugPanel?.addLog(`🕐 Showing ${recentTracks.length} recent tracks`);
   }
@@ -717,7 +768,7 @@ export class CosmicMusicPlayer {
     const backBtn = document.createElement("div");
     backBtn.className = "playlist-item";
     backBtn.style.cssText =
-      "background: #1a1a2e; position: sticky; top: 0; z-index: 10; cursor: pointer;";
+      "background: #1a1a2e; cursor: pointer; position: sticky; top: 0; z-index: 10; margin-bottom: 0;";
     backBtn.innerHTML = `
       <div class="song-info">
         <div class="song-name">
@@ -730,7 +781,7 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); position: sticky; top: 60px; z-index: 5; margin-bottom: 0;";
     header.innerHTML = `
       <span style="font-size: 0.8em; font-weight: bold;">📋 ${
         playlist.name
@@ -740,9 +791,24 @@ export class CosmicMusicPlayer {
     `;
     this.playlist.appendChild(header);
 
+    // Create scrollable tracks wrapper
+    const tracksWrapper = document.createElement("div");
+    // Get playlist section height and calculate wrapper max height
+    const playlistSection = document.querySelector(
+      ".playlist-section"
+    ) as HTMLElement;
+    const playlistSectionHeight = playlistSection
+      ? playlistSection.offsetHeight
+      : window.innerHeight;
+    const wrapperMaxHeight = playlistSectionHeight - 112;
+
+    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.className = "tracks-wrapper";
+
     if (playlist.trackIds.length === 0) {
       const emptyMessage = document.createElement("div");
       emptyMessage.className = "playlist-item";
+      emptyMessage.style.marginBottom = "0.5em";
       emptyMessage.innerHTML = `
         <div class="song-info">
           <div class="song-name" style="color: #888; text-align: center; width: 100%;">
@@ -753,7 +819,7 @@ export class CosmicMusicPlayer {
           </div>
         </div>
       `;
-      this.playlist.appendChild(emptyMessage);
+      tracksWrapper.appendChild(emptyMessage);
     } else {
       playlist.trackIds.forEach((trackId) => {
         const track = this.tracks.find((t) => t.id === trackId);
@@ -774,10 +840,12 @@ export class CosmicMusicPlayer {
           `;
 
           item.addEventListener("click", () => this.selectTrack(originalIndex));
-          this.playlist.appendChild(item);
+          tracksWrapper.appendChild(item);
         }
       });
     }
+
+    this.playlist.appendChild(tracksWrapper);
 
     this.debugPanel?.addLog(
       `📋 Showing playlist "${playlist.name}" with ${playlist.trackIds.length} tracks`
@@ -1310,6 +1378,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   createFloatingParticles();
+
+  // Add CSS to hide scrollbar for tracks wrapper
+  const style = document.createElement("style");
+  style.textContent = `
+    .tracks-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+  `;
+  document.head.appendChild(style);
 
   document.addEventListener("mousemove", (e: MouseEvent) => {
     const x = e.clientX / window.innerWidth;
