@@ -328,9 +328,9 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
     header.innerHTML = `
-      <div style="font-size: 1.5em; margin-bottom: 10px;">🎤 ${artistName}</div>
+      <span style="font-size: 0.8em; font-weight: bold;">🎤 ${artistName}</span>
     `;
     this.playlist.appendChild(header);
 
@@ -453,10 +453,9 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
     header.innerHTML = `
-      <div style="font-size: 1.5em; margin-bottom: 5px;">💿 ${albumName}</div>
-      <div style="font-size: 0.9em; color: #888; margin-top: 5px;">by ${artistName}</div>
+      <span style="font-size: 0.8em; font-weight: bold;">💿 ${albumName}</span> • <span style="font-size: 0.6em; color: #888;">by ${artistName}</span>
     `;
     this.playlist.appendChild(header);
 
@@ -662,10 +661,9 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
     header.innerHTML = `
-      <div style="font-size: 1.5em; margin-bottom: 10px;">🕐 Last 90 Days</div>
-      <div style="font-size: 0.9em; color: #888; margin-top: 5px;">Recently added tracks</div>
+      <span style="font-size: 0.8em; font-weight: bold;">🕐 Last 90 Days</span> • <span style="font-size: 0.6em; color: #888;">Recently added tracks</span>
     `;
     this.playlist.appendChild(header);
 
@@ -726,14 +724,13 @@ export class CosmicMusicPlayer {
 
     const header = document.createElement("div");
     header.style.cssText =
-      "padding: 20px; text-align: center; color: #00ffff; font-size: 1.3em; border-bottom: 2px solid #333;";
+      "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
     header.innerHTML = `
-      <div style="font-size: 1.5em; margin-bottom: 10px;">📋 ${
+      <span style="font-size: 0.8em; font-weight: bold;">📋 ${
         playlist.name
-      }</div>
-      <div style="font-size: 0.9em; color: #888; margin-top: 5px;">${
+      }</span> • <span style="font-size: 0.6em; color: #888;">${
         playlist.trackIds.length
-      } song${playlist.trackIds.length !== 1 ? "s" : ""}</div>
+      } song${playlist.trackIds.length !== 1 ? "s" : ""}</span>
     `;
     this.playlist.appendChild(header);
 
