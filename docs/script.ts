@@ -624,7 +624,7 @@ export class CosmicMusicPlayer {
     // Create Last 90 Days playlist
     const recentTracks = this.getLast90DaysTracks();
     const recentItem = document.createElement("div");
-    recentItem.className = "playlist-item";
+    recentItem.className = "playlist-item playlist-special-item";
     recentItem.style.cssText = "flex: 1; margin: 0;";
     recentItem.innerHTML = `
       <div class="song-info">
@@ -634,7 +634,7 @@ export class CosmicMusicPlayer {
         <div class="song-artist" style="color: #888;">
           ${recentTracks.length} song${
       recentTracks.length !== 1 ? "s" : ""
-    } • Recently added
+    } added
         </div>
       </div>
       <div class="song-duration" style="font-size: 1.5em;">›</div>
@@ -645,7 +645,7 @@ export class CosmicMusicPlayer {
 
     // Create New Playlist button
     const createPlaylistItem = document.createElement("div");
-    createPlaylistItem.className = "playlist-item";
+    createPlaylistItem.className = "playlist-item playlist-special-item";
     createPlaylistItem.style.cssText =
       "flex: 1; background: rgba(0, 255, 0, 0.1); border-color: rgba(0, 255, 0, 0.3); margin: 0;";
     createPlaylistItem.innerHTML = `

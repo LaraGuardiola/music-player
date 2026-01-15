@@ -299,8 +299,6 @@ body::before {
   font-size: 2em;
 }
 
-
-
 .playlist-section {
   background: linear-gradient(
     45deg,
@@ -348,6 +346,35 @@ body::before {
   min-height: 60px;
   max-height: 80px;
   box-sizing: border-box;
+}
+
+/* Special playlist items (Last 90 Days, Create Playlist) - exclude from height limits */
+.playlist-item.playlist-special-item {
+  min-height: auto;
+  max-height: none;
+  height: auto;
+}
+
+.playlist-item.playlist-special-item .song-name {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  max-height: none;
+  overflow: visible;
+  text-overflow: ellipsis;
+}
+
+/* Container for inline playlist options */
+.inline-options-container {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+/* Ensure special items in inline container maintain proper layout */
+.inline-options-container .playlist-item.playlist-special-item {
+  flex: 1;
+  min-width: 0;
 }
 
 .playlist-item::before {
@@ -425,6 +452,7 @@ body::before {
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   line-height: 1.2;
   max-height: 2.4em;
@@ -519,6 +547,16 @@ body::before {
     cursor: pointer;
     min-height: 55px;
     max-height: 75px;
+  }
+
+  .playlist-item.playlist-special-item {
+    min-height: auto;
+    max-height: none;
+    height: auto;
+  }
+
+  .inline-options-container {
+    gap: 8px;
   }
 
   .song-name {
