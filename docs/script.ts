@@ -200,17 +200,21 @@ export class CosmicMusicPlayer {
     let activeItem = document.querySelector(
       ".playlist-item.active"
     ) as HTMLElement;
-    
+
     if (!activeItem) return;
 
     // Determine the scroll container based on current view
     let scrollContainer: HTMLElement;
-    
-    if (this.currentView === "artist-detail" || 
-        this.currentView === "album-detail" || 
-        this.currentView === "playlist-detail") {
+
+    if (
+      this.currentView === "artist-detail" ||
+      this.currentView === "album-detail" ||
+      this.currentView === "playlist-detail"
+    ) {
       // For detail views, use the tracks wrapper
-      scrollContainer = this.playlist.querySelector(".tracks-wrapper") as HTMLElement;
+      scrollContainer = this.playlist.querySelector(
+        ".tracks-wrapper"
+      ) as HTMLElement;
     } else {
       // For main views, use the playlist section
       scrollContainer = this.playlistSection;
@@ -363,7 +367,7 @@ export class CosmicMusicPlayer {
       : window.innerHeight;
     const wrapperMaxHeight = playlistSectionHeight - 112;
 
-    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track
@@ -508,9 +512,21 @@ export class CosmicMusicPlayer {
     const playlistSectionHeight = playlistSection
       ? playlistSection.offsetHeight
       : window.innerHeight;
-    const wrapperMaxHeight = playlistSectionHeight - 112;
 
-    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    // Get safe area insets for mobile devices
+    const bodyStyles = window.getComputedStyle(document.body);
+    const paddingBottom = parseInt(bodyStyles.paddingBottom) || 0;
+
+    // Calculate wrapper max height considering safe areas and fixed position
+    const topPosition = 248; // Matches the fixed top position
+    const availableHeight =
+      window.innerHeight - topPosition - paddingBottom - 50; // 50px for bottom margin
+    const wrapperMaxHeight = Math.min(
+      playlistSectionHeight - 142,
+      availableHeight
+    );
+
+    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track
@@ -743,9 +759,21 @@ export class CosmicMusicPlayer {
     const playlistSectionHeight = playlistSection
       ? playlistSection.offsetHeight
       : window.innerHeight;
-    const wrapperMaxHeight = playlistSectionHeight - 132;
 
-    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    // Get safe area insets for mobile devices
+    const bodyStyles = window.getComputedStyle(document.body);
+    const paddingBottom = parseInt(bodyStyles.paddingBottom) || 0;
+
+    // Calculate wrapper max height considering safe areas and fixed position
+    const topPosition = 248; // Matches the fixed top position
+    const availableHeight =
+      window.innerHeight - topPosition - paddingBottom - 50; // 50px for bottom margin
+    const wrapperMaxHeight = Math.min(
+      playlistSectionHeight - 172,
+      availableHeight
+    );
+
+    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track
@@ -832,9 +860,21 @@ export class CosmicMusicPlayer {
     const playlistSectionHeight = playlistSection
       ? playlistSection.offsetHeight
       : window.innerHeight;
-    const wrapperMaxHeight = playlistSectionHeight - 112;
 
-    tracksWrapper.style.cssText = `position: fixed; top: 200px; left: 20px; width: 90%; max-height: ${wrapperMaxHeight}px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    // Get safe area insets for mobile devices
+    const bodyStyles = window.getComputedStyle(document.body);
+    const paddingBottom = parseInt(bodyStyles.paddingBottom) || 0;
+
+    // Calculate wrapper max height considering safe areas and fixed position
+    const topPosition = 248; // Matches the fixed top position
+    const availableHeight =
+      window.innerHeight - topPosition - paddingBottom - 50; // 50px for bottom margin
+    const wrapperMaxHeight = Math.min(
+      playlistSectionHeight - 142,
+      availableHeight
+    );
+
+    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track

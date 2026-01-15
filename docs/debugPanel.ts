@@ -16,8 +16,10 @@ export class DebugPanel {
     this.debugContent = this.panel.querySelector(
       "#debug-content"
     ) as HTMLDivElement;
-    document.body.appendChild(this.panel);
-    this.setupToggle();
+    // Don't add to DOM to hide it completely
+    // document.body.appendChild(this.panel);
+    // Don't setup toggle button
+    // this.setupToggle();
 
     setTimeout(() => {
       this.initialize();
