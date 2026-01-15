@@ -556,7 +556,7 @@ export class CosmicMusicPlayer {
     // Load playlists from storage
     this.loadPlaylists();
 
-// Create container for first two inline options
+    // Create container for first two inline options
     const inlineOptionsContainer = document.createElement("div");
     inlineOptionsContainer.style.cssText = "display: flex; gap: 10px;";
 
@@ -571,7 +571,9 @@ export class CosmicMusicPlayer {
           <span style="font-size: 1.1em;">🕐 Last 90 Days</span>
         </div>
         <div class="song-artist" style="color: #888;">
-          ${recentTracks.length} song${recentTracks.length !== 1 ? "s" : ""} • Recently added
+          ${recentTracks.length} song${
+      recentTracks.length !== 1 ? "s" : ""
+    } • Recently added
         </div>
       </div>
       <div class="song-duration" style="font-size: 1.5em;">›</div>
@@ -583,7 +585,8 @@ export class CosmicMusicPlayer {
     // Create New Playlist button
     const createPlaylistItem = document.createElement("div");
     createPlaylistItem.className = "playlist-item";
-    createPlaylistItem.style.cssText = "flex: 1; background: rgba(0, 255, 0, 0.1); border-color: rgba(0, 255, 0, 0.3); margin: 0;";
+    createPlaylistItem.style.cssText =
+      "flex: 1; background: rgba(0, 255, 0, 0.1); border-color: rgba(0, 255, 0, 0.3); margin: 0;";
     createPlaylistItem.innerHTML = `
       <div class="song-info">
         <div class="song-name">
@@ -596,7 +599,9 @@ export class CosmicMusicPlayer {
       <div class="song-duration" style="font-size: 1.5em;">+</div>
     `;
 
-    createPlaylistItem.addEventListener("click", () => this.showCreatePlaylistDialog());
+    createPlaylistItem.addEventListener("click", () =>
+      this.showCreatePlaylistDialog()
+    );
     inlineOptionsContainer.appendChild(createPlaylistItem);
 
     this.playlist.appendChild(inlineOptionsContainer);
@@ -664,7 +669,7 @@ export class CosmicMusicPlayer {
     header.style.cssText =
       "padding: 15px 20px; text-align: left; color: #00ffff; font-size: 1.1em; border-bottom: 2px solid rgba(0, 255, 255, 0.3); position: sticky; top: 60px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); z-index: 5;";
     header.innerHTML = `
-      <span style="font-size: 0.8em; font-weight: bold;">🕐 Last 90 Days</span> • <span style="font-size: 0.6em; color: #888;">Recently added tracks</span>
+      <span style="font-size: 0.8em; font-weight: bold;">🕐 Last 90 Days</span> • <span style="font-size: 0.6em; color: #888;">Recently added</span>
     `;
     this.playlist.appendChild(header);
 
@@ -730,8 +735,8 @@ export class CosmicMusicPlayer {
       <span style="font-size: 0.8em; font-weight: bold;">📋 ${
         playlist.name
       }</span> • <span style="font-size: 0.6em; color: #888;">${
-        playlist.trackIds.length
-      } song${playlist.trackIds.length !== 1 ? "s" : ""}</span>
+      playlist.trackIds.length
+    } song${playlist.trackIds.length !== 1 ? "s" : ""}</span>
     `;
     this.playlist.appendChild(header);
 
@@ -852,11 +857,9 @@ export class CosmicMusicPlayer {
 
     this.playlistPopup.appendChild(popupContent);
     document.body.appendChild(this.playlistPopup);
-    
+
     // Apply floating particles effect to popup
     createFloatingParticles(popupContent);
-
-
 
     // Close on background click
     this.playlistPopup.addEventListener("click", (e) => {
@@ -946,7 +949,11 @@ export class CosmicMusicPlayer {
           <span style="color: ${
             isInPlaylist ? "#ff0096" : "#00ffff"
           }; font-size: 0.9em;">
-            ${isInPlaylist ? "✓ Click to remove" : `${playlist.trackIds.length} tracks`}
+            ${
+              isInPlaylist
+                ? "✓ Click to remove"
+                : `${playlist.trackIds.length} tracks`
+            }
           </span>
         </div>
       `;
@@ -986,7 +993,7 @@ export class CosmicMusicPlayer {
 
     if (isAlreadyInPlaylist) {
       // Remove track from playlist
-      playlist.trackIds = playlist.trackIds.filter(id => id !== trackId);
+      playlist.trackIds = playlist.trackIds.filter((id) => id !== trackId);
       this.debugPanel?.addLog(
         `🗑️ Removed "${this.currentTrackForPlaylist.displayName}" from "${playlist.name}"`
       );
@@ -999,7 +1006,7 @@ export class CosmicMusicPlayer {
     }
 
     this.savePlaylists();
-    
+
     // Refresh the popup options to show updated state
     this.refreshPlaylistPopup();
 
@@ -1012,12 +1019,14 @@ export class CosmicMusicPlayer {
   private refreshPlaylistPopup(): void {
     if (!this.playlistPopup || !this.currentTrackForPlaylist) return;
 
-    const playlistOptionsContainer = this.playlistPopup.querySelector("#playlist-options");
+    const playlistOptionsContainer =
+      this.playlistPopup.querySelector("#playlist-options");
     if (playlistOptionsContainer) {
       playlistOptionsContainer.innerHTML = this.renderPlaylistOptions();
-      
+
       // Re-add click listeners to the new options
-      const playlistOptions = playlistOptionsContainer.querySelectorAll(".playlist-option");
+      const playlistOptions =
+        playlistOptionsContainer.querySelectorAll(".playlist-option");
       playlistOptions.forEach((option) => {
         option.addEventListener("click", () => {
           const playlistId = (option as HTMLElement).dataset.playlistId;
@@ -1030,8 +1039,6 @@ export class CosmicMusicPlayer {
       });
     }
   }
-
-
 
   private selectTrack(index: number): void {
     this.currentTrackIndex = index;
@@ -1295,7 +1302,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Try to load real tracks, fallback to mock tracks if empty
   const realTracks = await MediaStoreService.waitForTracks();
   trackList = realTracks.length > 0 ? realTracks : mockTracks;
-  
+
   const player = new CosmicMusicPlayer(debugPanel);
   await player.init();
   debugPanel.addLog("🎵 Ready");
