@@ -358,16 +358,8 @@ export class CosmicMusicPlayer {
 
     // Create scrollable tracks wrapper
     const tracksWrapper = document.createElement("div");
-    // Get playlist section height and calculate wrapper max height
-    const playlistSection = document.querySelector(
-      ".playlist-section"
-    ) as HTMLElement;
-    const playlistSectionHeight = playlistSection
-      ? playlistSection.offsetHeight
-      : window.innerHeight;
-    const wrapperMaxHeight = playlistSectionHeight - 112;
 
-    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.style.cssText = `position: relative; width: 100%; height: ${this.calculateAvailableHeight()}; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track
@@ -505,28 +497,7 @@ export class CosmicMusicPlayer {
 
     // Create scrollable tracks wrapper
     const tracksWrapper = document.createElement("div");
-    // Get playlist section height and calculate wrapper max height
-    const playlistSection = document.querySelector(
-      ".playlist-section"
-    ) as HTMLElement;
-    const playlistSectionHeight = playlistSection
-      ? playlistSection.offsetHeight
-      : window.innerHeight;
-
-    // Get safe area insets for mobile devices
-    const bodyStyles = window.getComputedStyle(document.body);
-    const paddingBottom = parseInt(bodyStyles.paddingBottom) || 0;
-
-    // Calculate wrapper max height considering safe areas and fixed position
-    const topPosition = 248; // Matches the fixed top position
-    const availableHeight =
-      window.innerHeight - topPosition - paddingBottom - 50; // 50px for bottom margin
-    const wrapperMaxHeight = Math.min(
-      playlistSectionHeight - 142,
-      availableHeight
-    );
-
-    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.style.cssText = `position: relative; width: 100%; height: ${this.calculateAvailableHeight()}; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track
@@ -752,28 +723,8 @@ export class CosmicMusicPlayer {
 
     // Create scrollable tracks wrapper
     const tracksWrapper = document.createElement("div");
-    // Get playlist section height and calculate wrapper max height
-    const playlistSection = document.querySelector(
-      ".playlist-section"
-    ) as HTMLElement;
-    const playlistSectionHeight = playlistSection
-      ? playlistSection.offsetHeight
-      : window.innerHeight;
 
-    // Get safe area insets for mobile devices
-    const bodyStyles = window.getComputedStyle(document.body);
-    const paddingBottom = parseInt(bodyStyles.paddingBottom) || 0;
-
-    // Calculate wrapper max height considering safe areas and fixed position
-    const topPosition = 248; // Matches the fixed top position
-    const availableHeight =
-      window.innerHeight - topPosition - paddingBottom - 50; // 50px for bottom margin
-    const wrapperMaxHeight = Math.min(
-      playlistSectionHeight - 172,
-      availableHeight
-    );
-
-    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.style.cssText = `position: relative; width: 100%; height: ${this.calculateAvailableHeight()}; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track
@@ -853,28 +804,7 @@ export class CosmicMusicPlayer {
 
     // Create scrollable tracks wrapper
     const tracksWrapper = document.createElement("div");
-    // Get playlist section height and calculate wrapper max height
-    const playlistSection = document.querySelector(
-      ".playlist-section"
-    ) as HTMLElement;
-    const playlistSectionHeight = playlistSection
-      ? playlistSection.offsetHeight
-      : window.innerHeight;
-
-    // Get safe area insets for mobile devices
-    const bodyStyles = window.getComputedStyle(document.body);
-    const paddingBottom = parseInt(bodyStyles.paddingBottom) || 0;
-
-    // Calculate wrapper max height considering safe areas and fixed position
-    const topPosition = 248; // Matches the fixed top position
-    const availableHeight =
-      window.innerHeight - topPosition - paddingBottom - 50; // 50px for bottom margin
-    const wrapperMaxHeight = Math.min(
-      playlistSectionHeight - 142,
-      availableHeight
-    );
-
-    tracksWrapper.style.cssText = `position: fixed; top: 248px; left: 18px; width: 90%; max-height: 300px; overflow-y: auto; padding: 0.5em; z-index: 1; scrollbar-width: none; -ms-overflow-style: none;`;
+    tracksWrapper.style.cssText = `position: relative; width: 100%; height: ${this.calculateAvailableHeight()}; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;`;
     tracksWrapper.className = "tracks-wrapper";
 
     // Add scroll event listener for sticky active track
@@ -1393,6 +1323,38 @@ export class CosmicMusicPlayer {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  private calculateAvailableHeight(): string {
+    const playlistSection = document.querySelector(
+      ".playlist-section"
+    ) as HTMLElement;
+
+    if (!playlistSection) {
+      return "390px"; // Fallback value
+    }
+
+    const sectionHeight = playlistSection.offsetHeight;
+    const computedStyle = window.getComputedStyle(playlistSection);
+    const paddingTop = parseFloat(computedStyle.paddingTop);
+    const paddingBottom = parseFloat(computedStyle.paddingBottom);
+
+    // Get the first child (back button)
+    const firstChild = playlistSection.firstElementChild as HTMLElement;
+    const backButtonHeight = firstChild ? firstChild.offsetHeight : 0;
+
+    // Get the second child (header)
+    const secondChild = firstChild?.nextElementSibling as HTMLElement;
+    const headerHeight = secondChild ? secondChild.offsetHeight : 0;
+
+    const availableHeight =
+      sectionHeight -
+      paddingTop -
+      paddingBottom -
+      backButtonHeight -
+      headerHeight; // 16px to compensate for removed padding
+
+    return `${Math.max(300, availableHeight)}px`; // Minimum 300px
   }
 
   private displayActiveOption() {
