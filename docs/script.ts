@@ -23,6 +23,8 @@ export class CosmicMusicPlayer {
   private playlistPopup: HTMLElement | null = null;
   private currentTrackForPlaylist: Track | null = null;
   private progressFill: HTMLElement;
+  private isDragging: boolean = false;
+  private progressBar: HTMLElement | null = null;
   private currentTimeDisplay: HTMLElement;
   private totalTimeDisplay: HTMLElement;
   private currentTrackName: HTMLElement;
@@ -180,9 +182,27 @@ export class CosmicMusicPlayer {
     this.audio.addEventListener("waiting", () => this.onWaiting());
     this.audio.addEventListener("playing", () => this.onPlaying());
 
-    document
-      .querySelector(".progress-bar")!
-      .addEventListener("click", (e) => this.seek(e as MouseEvent));
+    const progressBarElement = document.querySelector(
+      ".progress-bar"
+    ) as HTMLElement;
+
+    // Mouse events
+    progressBarElement.addEventListener("mousedown", (e) => this.startSeek(e));
+    document.addEventListener("mousemove", (e) => this.continueSeek(e));
+    document.addEventListener("mouseup", () => this.endSeek());
+
+    // Touch events for mobile
+    progressBarElement.addEventListener("touchstart", (e) => this.startSeek(e));
+    document.addEventListener("touchmove", (e) => this.continueSeek(e));
+    document.addEventListener("touchend", () => this.endSeek());
+    document.addEventListener("touchcancel", () => this.endSeek());
+
+    // Keep click as fallback
+    progressBarElement.addEventListener("click", (e) => {
+      if (!this.isDragging) {
+        this.seek(e as MouseEvent);
+      }
+    });
     this.playlistSection.addEventListener("scroll", () =>
       this.handleStickyActiveTrack()
     );
@@ -1238,19 +1258,63 @@ export class CosmicMusicPlayer {
     this.debugPanel?.addLog(`⏭️ Next`);
   }
 
-  private seek(e: MouseEvent): void {
-    const progressBar = e.currentTarget as HTMLElement;
-    const percentage = (e.offsetX / progressBar.offsetWidth) * 100;
+  private seek(e: MouseEvent | TouchEvent): void {
+    const progressBar = this.progressBar || (e.currentTarget as HTMLElement);
+    const rect = progressBar.getBoundingClientRect();
+    
+    let clientX: number;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+    } else {
+      clientX = e.clientX;
+    }
+    
+    const percentage = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+
+    // Always update the progress fill in real-time
+    this.progressFill.style.width = percentage + "%";
+    
+
 
     if (this.audio.duration) {
       this.audio.currentTime = (percentage / 100) * this.audio.duration;
-    } else {
-      this.progressFill.style.width = percentage + "%";
-    }
+      // Show real-time preview during drag
+      this.currentTimeDisplay.textContent = this.formatTime(
+        (percentage / 100) * this.audio.duration
+      );
+  }
+  }
+
+
+
+  private startSeek(e: MouseEvent | TouchEvent): void {
+    e.preventDefault();
+    this.isDragging = true;
+    this.progressBar = e.currentTarget as HTMLElement;
+
+    // Add visual feedback
+    this.progressBar?.classList.add("seeking");
+
+    this.seek(e);
+  }
+
+  private continueSeek(e: MouseEvent | TouchEvent): void {
+    if (!this.isDragging || !this.progressBar) return;
+    e.preventDefault();
+    this.seek(e);
+  }
+
+
+  private endSeek(): void {
+    if (!this.isDragging) return;
+
+    this.isDragging = false;
+    this.progressBar?.classList.remove("seeking");
+    this.progressBar = null;
   }
 
   private updateProgress(): void {
-    if (this.audio.duration) {
+    if (this.audio.duration && !this.isDragging) {
       const percentage = (this.audio.currentTime / this.audio.duration) * 100;
       this.progressFill.style.width = percentage + "%";
       this.currentTimeDisplay.textContent = this.formatTime(
@@ -1418,13 +1482,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 document.addEventListener("DOMContentLoaded", () => {
   createFloatingParticles();
 
-  // Add CSS to hide scrollbar for tracks wrapper
+  // Add CSS for enhanced seek functionality and scrollbar hiding
   const style = document.createElement("style");
   style.textContent = `
-    .tracks-wrapper::-webkit-scrollbar {
-      display: none;
-    }
-  `;
+      .tracks-wrapper::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Enhanced progress bar styles */
+      .progress-bar {
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+
+      .progress-bar.seeking {
+        opacity: 0.8;
+        transform: scaleY(1.2);
+      }
+
+      .progress-bar.seeking .progress-fill {
+        background: linear-gradient(90deg, #00ffff 0%, #ff0096 100%);
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      }
+
+      /* Better touch targets for mobile */
+      .progress-bar {
+        min-height: 8px;
+      }
+
+      .progress-fill {
+        transition: none;
+      }
+
+      .progress-bar:not(.seeking) .progress-fill {
+        transition: width 0.1s ease;
+      }
+      
+    `;
   document.head.appendChild(style);
 
   document.addEventListener("mousemove", (e: MouseEvent) => {
